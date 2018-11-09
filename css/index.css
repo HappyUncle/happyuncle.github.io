@@ -1,0 +1,44 @@
+/*主体*/
+body{
+    background-color:#333333;
+}
+/*内容区*/
+#main{
+    width:100%;
+    /*text-align: center;*/
+}
+/*内容显示*/
+h1{
+    text-align: center;
+    color: #ffffff;
+    text-shadow: 5px 5px 5px #555;
+}
+h3{
+    /*text-align: center;*/
+    color: #ffffff;
+    text-shadow: 5px 5px 5px #555;
+}
+
+#img_logo{
+    text-align: center;
+}
+#logo{
+    margin: auto;
+    width: 320px;
+    height: 180px;
+    box-shadow: 5px 5px 5px #aaa;
+    border-radius:10px;
+}
+.content{
+    text-align: center;
+    font-size: 20px;
+    color: #ffffff;
+    text-shadow: 3px 3px 3px #555;
+}
+/*底部*/
+#footer{
+    color: #ffffff;
+    text-align: center;
+    font-size: 10px;
+    margin-top:50px;
+}
