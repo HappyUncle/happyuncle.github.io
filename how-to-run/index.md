@@ -1,12 +1,13 @@
 # How to Run
 
+---
 
-# 安装最新版go
+## 安装最新版go
 
 [https://www.runoob.com/go/go-environment.html](https://www.runoob.com/go/go-environment.html)
 
 
-# 安装hugo
+## 安装hugo
 
 [https://github.com/gohugoio/hugo](https://github.com/gohugoio/hugo)
 
@@ -15,7 +16,7 @@ CGO_ENABLED=1 go install --tags extended github.com/gohugoio/hugo@latest
 ```
 
 
-# 新建私有仓库并初始化
+## 新建私有仓库并初始化
 
 新建私有仓库 [https://github.com/xxx/xxx](https://github.com/xxx/xxx)
 
@@ -26,7 +27,7 @@ hugo new site . --force
 ```
 
 
-# 更新主题
+## 更新主题
 
 ```bash
 git submodule add https://github.com/HEIGE-PCloud/DoIt.git themes/DoIt
@@ -34,11 +35,11 @@ echo 'theme = "DoIt"' >> config.toml
 ```
 
 
-## 更多配置
+### 更多配置
 
 [https://hugodoit.pages.dev/zh-cn/theme-documentation-basics/](https://hugodoit.pages.dev/zh-cn/theme-documentation-basics/#创建你的项目)
 
-### (非必须)开启评论
+#### (非必须)开启评论
 
 https://giscus.app/zh-CN
 
@@ -59,7 +60,7 @@ https://giscus.app/zh-CN
   dataLang = "en"
 ```
 
-# 新建文章
+## 新建文章
 
 ```bash
 hugo new posts/how-to-run.md
@@ -67,7 +68,7 @@ vim content/posts/how-to-run.md
 ```
 
 
-# 运行看效果
+## 运行看效果
 
 > 默认情况下, 所有文章和页面均作为草稿创建. 如果想要渲染这些页面, 请从元数据中删除属性 draft: true, 设置属性 draft: false 或者为 hugo 命令添加 -D/--buildDrafts 参数.
 
@@ -80,19 +81,19 @@ hugo server -D --disableFastRender -e production
 ```
 
 
-# 配置github action 实现提交同步到主页
+## 配置github action 实现提交同步到主页
 
-## 配置 api token
+### 配置 api token
 
 [https://zhuanlan.zhihu.com/p/568764664](https://zhuanlan.zhihu.com/p/568764664)
 
 在私有仓库中配置 PERSONAL_TOKEN
 
-## 新建个人主页
+### 新建个人主页
 
 [https://github.com/xxxx/xxx.github.io](https://github.com/xxx/xxx.github.io)
 
-## 添加 workflow
+### 添加 workflow
 
 vim .github/workflows/gh-pages.yml
 
@@ -136,7 +137,7 @@ jobs:
           commit_message: ${{ github.event.head_commit.message }}
 ```
 
-## 推送代码等待效果
+### 推送代码等待效果
 
 ```bash
 git add .
