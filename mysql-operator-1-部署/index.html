@@ -1,0 +1,1198 @@
+<!doctype html><html lang=zh-cn><head><meta charset=utf-8><meta name=viewport content="width=device-width,initial-scale=1"><meta name=robots content="noodp"><title>bitpoke/mysql-operator 技术解读系列 - 部署 - C4H</title><meta name=Description content="code for happy"><meta property="og:title" content="bitpoke/mysql-operator 技术解读系列 - 部署"><meta property="og:description" content="命令安装 mysql-operator 的操作命令在官方仓库和官网都有说明，具体安装命令如下： 1 2 3 ## For Helm v3 helm repo add bitpoke https://helm-charts.bitpoke.io helm install mysql-operator bitpoke/mysql-operator 在安装的chart包中，values.yam"><meta property="og:type" content="article"><meta property="og:url" content="/mysql-operator-1-%E9%83%A8%E7%BD%B2/"><meta property="og:image" content="/logo.png"><meta property="article:section" content="posts"><meta property="article:published_time" content="2023-03-12T19:33:20+08:00"><meta property="article:modified_time" content="2023-03-12T19:33:20+08:00"><meta property="og:site_name" content="C4H"><meta name=twitter:card content="summary_large_image"><meta name=twitter:image content="/logo.png"><meta name=twitter:title content="bitpoke/mysql-operator 技术解读系列 - 部署"><meta name=twitter:description content="命令安装 mysql-operator 的操作命令在官方仓库和官网都有说明，具体安装命令如下： 1 2 3 ## For Helm v3 helm repo add bitpoke https://helm-charts.bitpoke.io helm install mysql-operator bitpoke/mysql-operator 在安装的chart包中，values.yam"><meta name=application-name content="C4H"><meta name=apple-mobile-web-app-title content="C4H"><meta name=theme-color content="#f8f8f8"><meta name=msapplication-TileColor content="#da532c"><link rel="shortcut icon" type=image/x-icon href=/favicon.ico><link rel=icon type=image/png sizes=32x32 href=/favicon-32x32.png><link rel=icon type=image/png sizes=16x16 href=/favicon-16x16.png><link rel=apple-touch-icon sizes=180x180 href=/apple-touch-icon.png><link rel=mask-icon href=/safari-pinned-tab.svg color=#5bbad5><link rel=canonical href=/mysql-operator-1-%E9%83%A8%E7%BD%B2/><link rel=prev href=/mysql-operator-0/><link rel=stylesheet href=/lib/normalize/normalize.min.css><link rel=stylesheet href=/css/color.css><link rel=stylesheet href=/css/style.min.css><link rel=preload as=style onload='this.onload=null,this.rel="stylesheet"' href=/lib/fontawesome-free/all.min.css><noscript><link rel=stylesheet href=/lib/fontawesome-free/all.min.css></noscript><link rel=preload as=style onload='this.onload=null,this.rel="stylesheet"' href=/lib/animate/animate.min.css><noscript><link rel=stylesheet href=/lib/animate/animate.min.css></noscript><script type=application/ld+json>{"@context":"http://schema.org","@type":"BlogPosting","headline":"bitpoke/mysql-operator 技术解读系列 - 部署","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"\/mysql-operator-1-%E9%83%A8%E7%BD%B2\/"},"genre":"posts","keywords":"mysql, operator","wordcount":3880,"url":"\/mysql-operator-1-%E9%83%A8%E7%BD%B2\/","datePublished":"2023-03-12T19:33:20+08:00","dateModified":"2023-03-12T19:33:20+08:00","publisher":{"@type":"Organization","name":""},"author":{"@type":"Person","name":"happyuncle"},"description":""}</script><script src=//instant.page/5.1.1 defer type=module integrity=sha384-MWfCL6g1OTGsbSwfuMHc8+8J2u71/LA8dzlIN3ycajckxuZZmF+DNjdm7O6H3PSq></script></head><body header-desktop=fixed header-mobile=auto><script type=text/javascript>function setTheme(e){document.body.setAttribute("theme",e),document.documentElement.style.setProperty("color-scheme",e==="light"?"light":"dark")}function saveTheme(e){window.localStorage&&localStorage.setItem("theme",e)}function getMeta(e){const t=document.getElementsByTagName("meta");for(let n=0;n<t.length;n++)if(t[n].getAttribute("name")===e)return t[n];return""}if(window.localStorage&&localStorage.getItem("theme")){let e=localStorage.getItem("theme");e==="light"||e==="dark"||e==="black"?setTheme(e):setTheme(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}else"auto"==="light"||"auto"==="dark"||"auto"==="black"?(setTheme("auto"),saveTheme("auto")):(saveTheme("auto"),setTheme(window.matchMedia&&window.matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light"));let metaColors={light:"#f8f8f8",dark:"#252627",black:"#000000"};getMeta("theme-color").content=metaColors[document.body.getAttribute("theme")]</script><div id=back-to-top></div><div id=mask></div><div class=wrapper><header class=desktop id=header-desktop><div class=header-wrapper><div class=header-title><a href=/ title=C4H><span id=desktop-header-typeit class=typeit></span></a></div><div class=menu><div class=menu-inner><a class=menu-item href=/posts/>文章 </a><a class=menu-item href=/tags/>标签 </a><a class=menu-item href=/categories/>分类 </a><span class="menu-item delimiter"></span><span class="menu-item search" id=search-desktop>
+<input type=text placeholder=搜索文章标题或内容... id=search-input-desktop>
+<a href=# class="search-button search-toggle" id=search-toggle-desktop title=搜索><i class="fas fa-search fa-fw"></i></a>
+<a href=# class="search-button search-clear" id=search-clear-desktop title=清空><i class="fas fa-times-circle fa-fw"></i></a>
+<span class="search-button search-loading" id=search-loading-desktop><i class="fas fa-spinner fa-fw fa-spin"></i></span>
+</span><a href=# class="menu-item theme-select" title=切换主题><i class="fas fa-adjust fa-fw"></i>
+<select class=color-theme-select id=theme-select-desktop title=切换主题><option value=light>浅色</option><option value=dark>深色</option><option value=black>黑色</option><option value=auto>跟随系统</option></select></a></div></div></div></header><header class=mobile id=header-mobile><div class=header-container><div class=header-wrapper><div class=header-title><a href=/ title=C4H><span id=mobile-header-typeit class=typeit></span></a></div><div class=menu-toggle id=menu-toggle-mobile><span></span><span></span><span></span></div></div><div class=menu id=menu-mobile><div class=search-wrapper><div class="search mobile" id=search-mobile><input type=text placeholder=搜索文章标题或内容... id=search-input-mobile>
+<a href=# class="search-button search-toggle" id=search-toggle-mobile title=搜索><i class="fas fa-search fa-fw"></i></a>
+<a href=# class="search-button search-clear" id=search-clear-mobile title=清空><i class="fas fa-times-circle fa-fw"></i></a>
+<span class="search-button search-loading" id=search-loading-mobile><i class="fas fa-spinner fa-fw fa-spin"></i></span></div><a href=# class=search-cancel id=search-cancel-mobile>取消</a></div><a class=menu-item href=/posts/ title>文章</a><a class=menu-item href=/tags/ title>标签</a><a class=menu-item href=/categories/ title>分类</a><a href=# class="menu-item theme-select" title=切换主题>
+<i class="fas fa-adjust fa-fw"></i>
+<select class=color-theme-select id=theme-select-mobile title=切换主题><option value=light>浅色</option><option value=dark>深色</option><option value=black>黑色</option><option value=auto>跟随系统</option></select></a></div></div></header><div class="search-dropdown desktop"><div id=search-dropdown-desktop></div></div><div class="search-dropdown mobile"><div id=search-dropdown-mobile></div></div><main class=main><div class=container><div class=toc id=toc-auto><h2 class=toc-title>目录</h2><div class="toc-content always-active" id=toc-content-auto><nav id=TableOfContents><ul><li><a href=#命令>命令</a></li><li><a href=#本地部署>本地部署</a></li><li><a href=#资源解读>资源解读</a><ul><li><a href=#梳理crd>梳理CRD</a></li><li><a href=#梳理其他资源>梳理其他资源</a></li><li><a href=#statefulset>StatefulSet</a><ul><li><a href=#operator-容器>operator 容器</a></li><li><a href=#orchestrator-容器>orchestrator 容器</a></li></ul></li><li><a href=#configmap>ConfigMap</a></li><li><a href=#secret>Secret</a></li><li><a href=#service>Service</a></li><li><a href=#serviceaccountclusterroleclusterrolebinding>ServiceAccount、ClusterRole、ClusterRoleBinding</a><ul><li><a href=#补充>补充</a></li></ul></li></ul></li><li><a href=#总结>总结</a></li></ul></nav></div></div><script>document.getElementsByTagName("main")[0].setAttribute("pageStyle","normal")</script><script>document.getElementsByTagName("main")[0].setAttribute("autoTOC","true")</script><article class="page single"><h1 class="single-title animate__animated animate__flipInX">bitpoke/mysql-operator 技术解读系列 - 部署</h1><div class=post-meta><div class=post-meta-line><span class=post-author><i class="author fas fa-user-circle fa-fw"></i><a href=/ title=Author rel=author class=author>happyuncle</a>
+</span>&nbsp;<span class=post-category>收录于 </span>&nbsp;<span class=post-category>类别 <a href=/categories/mysql-operator/><i class="far fa-folder fa-fw"></i>mysql-operator</a></span></div><div class=post-meta-line><i class="far fa-calendar-alt fa-fw"></i>&nbsp;<time datetime=2023-03-12>2023-03-12</time>&nbsp;<i class="far fa-edit fa-fw"></i>&nbsp;<time datetime=2023-03-12>2023-03-12</time>&nbsp;<i class="fas fa-pencil-alt fa-fw"></i>&nbsp;约 3880 字&nbsp;
+<i class="far fa-clock fa-fw"></i>&nbsp;预计阅读 8 分钟&nbsp;</div></div><div class="details toc" id=toc-static kept><div class="details-summary toc-title"><span>目录</span>
+<span><i class="details-icon fas fa-angle-right"></i></span></div><div class="details-content toc-content" id=toc-content-static><nav id=TableOfContents><ul><li><a href=#命令>命令</a></li><li><a href=#本地部署>本地部署</a></li><li><a href=#资源解读>资源解读</a><ul><li><a href=#梳理crd>梳理CRD</a></li><li><a href=#梳理其他资源>梳理其他资源</a></li><li><a href=#statefulset>StatefulSet</a><ul><li><a href=#operator-容器>operator 容器</a></li><li><a href=#orchestrator-容器>orchestrator 容器</a></li></ul></li><li><a href=#configmap>ConfigMap</a></li><li><a href=#secret>Secret</a></li><li><a href=#service>Service</a></li><li><a href=#serviceaccountclusterroleclusterrolebinding>ServiceAccount、ClusterRole、ClusterRoleBinding</a><ul><li><a href=#补充>补充</a></li></ul></li></ul></li><li><a href=#总结>总结</a></li></ul></nav></div></div><div class=content id=content><hr><h2 id=命令 class=headerLink><a href=#%e5%91%bd%e4%bb%a4 class=header-mark></a>命令</h2><p>安装 mysql-operator 的操作命令在<a href=https://github.com/bitpoke/mysql-operator#controller-deploy target=_blank rel="noopener noreferrer">官方仓库</a>和<a href=https://www.bitpoke.io/docs/mysql-operator/getting-started/ target=_blank rel="noopener noreferrer">官网</a>都有说明，具体安装命令如下：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl><span class=c1>## For Helm v3</span>
+</span></span><span class=line><span class=cl>helm repo add bitpoke https://helm-charts.bitpoke.io
+</span></span><span class=line><span class=cl>helm install mysql-operator bitpoke/mysql-operator
+</span></span></code></pre></td></tr></table></div></div><p>在安装的chart包中，<a href=https://github.com/bitpoke/mysql-operator/tree/master/deploy/charts/mysql-operator#readme target=_blank rel="noopener noreferrer">values.yaml文件</a>有些内容可以自定义配置。</p><ul><li>如果想要在一个k8s集群里面启动多个mysql-operator，不想让不用operator互相干扰，就可以指定watchNamespace参数</li><li>如果k8s集群使用的storageClass不支持动态迁移，那么operator的replicaCount就得设置为3，否则节点挂掉后无法拉起新的pod</li><li>因为mysql高可用是基于orchestrator实现的，orchestrator又需要一个元数据库，元数据库的账号密码可以通过 orchestrator.topologyUser 和 orchestrator.topologyPassword 指定。topologyUser默认值是 orchestrator，如果密码不指定会随机生成</li><li>(其他参数以后用到再说明)&mldr; &mldr;</li></ul><h2 id=本地部署 class=headerLink><a href=#%e6%9c%ac%e5%9c%b0%e9%83%a8%e7%bd%b2 class=header-mark></a>本地部署</h2><ul><li>添加 repo</li></ul><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>$ helm repo add bitpoke https://helm-charts.bitpoke.io
+</span></span></code></pre></td></tr></table></div></div><ul><li>安装 mysql-operator</li></ul><p>安装之前先创建一个namespace，然后将mysql-operator安装到这个ns中</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>$ kubectl create namespace mysql
+</span></span><span class=line><span class=cl>namespace/mysql created
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>$ helm install mysql-operator bitpoke/mysql-operator -n mysql
+</span></span><span class=line><span class=cl>NAME: mysql-operator
+</span></span><span class=line><span class=cl>LAST DEPLOYED: Fri Mar <span class=m>17</span> 18:53:26 <span class=m>2023</span>
+</span></span><span class=line><span class=cl>NAMESPACE: mysql
+</span></span><span class=line><span class=cl>STATUS: deployed
+</span></span><span class=line><span class=cl>REVISION: <span class=m>1</span>
+</span></span><span class=line><span class=cl>TEST SUITE: None
+</span></span><span class=line><span class=cl>NOTES:
+</span></span><span class=line><span class=cl>You can create a new cluster by issuing:
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>cat <span class=s>&lt;&lt;EOF | kubectl apply -f-
+</span></span></span><span class=line><span class=cl><span class=s>apiVersion: mysql.presslabs.org/v1alpha1
+</span></span></span><span class=line><span class=cl><span class=s>kind: MysqlCluster
+</span></span></span><span class=line><span class=cl><span class=s>metadata:
+</span></span></span><span class=line><span class=cl><span class=s>  name: my-cluster
+</span></span></span><span class=line><span class=cl><span class=s>spec:
+</span></span></span><span class=line><span class=cl><span class=s>  replicas: 1
+</span></span></span><span class=line><span class=cl><span class=s>  secretName: my-cluster-secret
+</span></span></span><span class=line><span class=cl><span class=s>---
+</span></span></span><span class=line><span class=cl><span class=s>apiVersion: v1
+</span></span></span><span class=line><span class=cl><span class=s>kind: Secret
+</span></span></span><span class=line><span class=cl><span class=s>metadata:
+</span></span></span><span class=line><span class=cl><span class=s>  name: my-cluster-secret
+</span></span></span><span class=line><span class=cl><span class=s>type: Opaque
+</span></span></span><span class=line><span class=cl><span class=s>data:
+</span></span></span><span class=line><span class=cl><span class=s>  ROOT_PASSWORD: $(echo -n &#34;not-so-secure&#34; | base64)
+</span></span></span><span class=line><span class=cl><span class=s>EOF</span>
+</span></span></code></pre></td></tr></table></div></div><p>执行成功后，可以用kubectl工具查询pod状态，直到Running</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>$ kubectl get all -n mysql
+</span></span><span class=line><span class=cl>NAME                   READY   STATUS    RESTARTS   AGE
+</span></span><span class=line><span class=cl>pod/mysql-operator-0   2/2     Running   <span class=m>1</span>          3m11s
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>NAME                         TYPE        CLUSTER-IP       EXTERNAL-IP   PORT<span class=o>(</span>S<span class=o>)</span>            AGE
+</span></span><span class=line><span class=cl>service/mysql-operator       ClusterIP   10.102.117.142   &lt;none&gt;        80/TCP,9125/TCP    9m1s
+</span></span><span class=line><span class=cl>service/mysql-operator-orc   ClusterIP   None             &lt;none&gt;        80/TCP,10008/TCP   9m1s
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>NAME                              READY   AGE
+</span></span><span class=line><span class=cl>statefulset.apps/mysql-operator   1/1     9m1s
+</span></span></code></pre></td></tr></table></div></div><p>至此 mysql-operator 就算安装完成了。</p><h2 id=资源解读 class=headerLink><a href=#%e8%b5%84%e6%ba%90%e8%a7%a3%e8%af%bb class=header-mark></a>资源解读</h2><p>上述的安装流程步骤很简单，但是运行起来的mysql-operator对我们来说就是一个黑盒，下面通过执行 helm template 对其被安装的内容进行梳理。</p><h3 id=梳理crd class=headerLink><a href=#%e6%a2%b3%e7%90%86crd class=header-mark></a>梳理CRD</h3><p>CRD 全程叫做 CustomResourceDefinition，详细信息可以从<a href=https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/ target=_blank rel="noopener noreferrer">官网</a>获取，这里不进行解释。</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span><span class=lnt>9
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>$ helm template mysql-operator bitpoke/mysql-operator -n mysql --include-crds <span class=p>|</span> grep -A <span class=m>20</span> CustomResourceDefinition <span class=p>|</span> grep -e kind
+</span></span><span class=line><span class=cl>kind: CustomResourceDefinition
+</span></span><span class=line><span class=cl>    kind: MysqlBackup
+</span></span><span class=line><span class=cl>kind: CustomResourceDefinition
+</span></span><span class=line><span class=cl>    kind: MysqlCluster
+</span></span><span class=line><span class=cl>kind: CustomResourceDefinition
+</span></span><span class=line><span class=cl>    kind: MysqlDatabase
+</span></span><span class=line><span class=cl>kind: CustomResourceDefinition
+</span></span><span class=line><span class=cl>    kind: MysqlUser
+</span></span></code></pre></td></tr></table></div></div><p>从上面可以看到，安装mysql-operator的时候会创建4个CRD资源。从名称可以看出是分别是关于backup、cluster、database、user 相关的，也是本系列在后续篇章中要重点讲解的内容。</p><h3 id=梳理其他资源 class=headerLink><a href=#%e6%a2%b3%e7%90%86%e5%85%b6%e4%bb%96%e8%b5%84%e6%ba%90 class=header-mark></a>梳理其他资源</h3><p>查看 mysql-operator 依赖的其他资源</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>$ helm template mysql-operator bitpoke/mysql-operator -n mysql <span class=p>|</span> grep -e ^kind -e name <span class=p>|</span> grep -A <span class=m>1</span> ^kind
+</span></span><span class=line><span class=cl>kind: ServiceAccount
+</span></span><span class=line><span class=cl>  name: mysql-operator
+</span></span><span class=line><span class=cl>--
+</span></span><span class=line><span class=cl>kind: Secret
+</span></span><span class=line><span class=cl>  name: mysql-operator-orc
+</span></span><span class=line><span class=cl>--
+</span></span><span class=line><span class=cl>kind: ConfigMap
+</span></span><span class=line><span class=cl>  name: mysql-operator-orc
+</span></span><span class=line><span class=cl>--
+</span></span><span class=line><span class=cl>kind: ClusterRole
+</span></span><span class=line><span class=cl>  name: mysql-operator
+</span></span><span class=line><span class=cl>--
+</span></span><span class=line><span class=cl>kind: ClusterRoleBinding
+</span></span><span class=line><span class=cl>  name: mysql-operator
+</span></span><span class=line><span class=cl>--
+</span></span><span class=line><span class=cl>kind: Service
+</span></span><span class=line><span class=cl>  name: mysql-operator-orc
+</span></span><span class=line><span class=cl>--
+</span></span><span class=line><span class=cl>kind: Service
+</span></span><span class=line><span class=cl>  name: mysql-operator
+</span></span><span class=line><span class=cl>--
+</span></span><span class=line><span class=cl>kind: StatefulSet
+</span></span><span class=line><span class=cl>  name: mysql-operator
+</span></span></code></pre></td></tr></table></div></div><p>从上可以看出，计算资源由StatefulSet管理，有2个Service资源，1个ConfigMap，1个Secret。其余3个是跟权限管理相关的配置。</p><p>接下来详细聊聊每个资源的作用。</p><h3 id=statefulset class=headerLink><a href=#statefulset class=header-mark></a>StatefulSet</h3><p>helm install 安装时的内容如下：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>  1
+</span><span class=lnt>  2
+</span><span class=lnt>  3
+</span><span class=lnt>  4
+</span><span class=lnt>  5
+</span><span class=lnt>  6
+</span><span class=lnt>  7
+</span><span class=lnt>  8
+</span><span class=lnt>  9
+</span><span class=lnt> 10
+</span><span class=lnt> 11
+</span><span class=lnt> 12
+</span><span class=lnt> 13
+</span><span class=lnt> 14
+</span><span class=lnt> 15
+</span><span class=lnt> 16
+</span><span class=lnt> 17
+</span><span class=lnt> 18
+</span><span class=lnt> 19
+</span><span class=lnt> 20
+</span><span class=lnt> 21
+</span><span class=lnt> 22
+</span><span class=lnt> 23
+</span><span class=lnt> 24
+</span><span class=lnt> 25
+</span><span class=lnt> 26
+</span><span class=lnt> 27
+</span><span class=lnt> 28
+</span><span class=lnt> 29
+</span><span class=lnt> 30
+</span><span class=lnt> 31
+</span><span class=lnt> 32
+</span><span class=lnt> 33
+</span><span class=lnt> 34
+</span><span class=lnt> 35
+</span><span class=lnt> 36
+</span><span class=lnt> 37
+</span><span class=lnt> 38
+</span><span class=lnt> 39
+</span><span class=lnt> 40
+</span><span class=lnt> 41
+</span><span class=lnt> 42
+</span><span class=lnt> 43
+</span><span class=lnt> 44
+</span><span class=lnt> 45
+</span><span class=lnt> 46
+</span><span class=lnt> 47
+</span><span class=lnt> 48
+</span><span class=lnt> 49
+</span><span class=lnt> 50
+</span><span class=lnt> 51
+</span><span class=lnt> 52
+</span><span class=lnt> 53
+</span><span class=lnt> 54
+</span><span class=lnt> 55
+</span><span class=lnt> 56
+</span><span class=lnt> 57
+</span><span class=lnt> 58
+</span><span class=lnt> 59
+</span><span class=lnt> 60
+</span><span class=lnt> 61
+</span><span class=lnt> 62
+</span><span class=lnt> 63
+</span><span class=lnt> 64
+</span><span class=lnt> 65
+</span><span class=lnt> 66
+</span><span class=lnt> 67
+</span><span class=lnt> 68
+</span><span class=lnt> 69
+</span><span class=lnt> 70
+</span><span class=lnt> 71
+</span><span class=lnt> 72
+</span><span class=lnt> 73
+</span><span class=lnt> 74
+</span><span class=lnt> 75
+</span><span class=lnt> 76
+</span><span class=lnt> 77
+</span><span class=lnt> 78
+</span><span class=lnt> 79
+</span><span class=lnt> 80
+</span><span class=lnt> 81
+</span><span class=lnt> 82
+</span><span class=lnt> 83
+</span><span class=lnt> 84
+</span><span class=lnt> 85
+</span><span class=lnt> 86
+</span><span class=lnt> 87
+</span><span class=lnt> 88
+</span><span class=lnt> 89
+</span><span class=lnt> 90
+</span><span class=lnt> 91
+</span><span class=lnt> 92
+</span><span class=lnt> 93
+</span><span class=lnt> 94
+</span><span class=lnt> 95
+</span><span class=lnt> 96
+</span><span class=lnt> 97
+</span><span class=lnt> 98
+</span><span class=lnt> 99
+</span><span class=lnt>100
+</span><span class=lnt>101
+</span><span class=lnt>102
+</span><span class=lnt>103
+</span><span class=lnt>104
+</span><span class=lnt>105
+</span><span class=lnt>106
+</span><span class=lnt>107
+</span><span class=lnt>108
+</span><span class=lnt>109
+</span><span class=lnt>110
+</span><span class=lnt>111
+</span><span class=lnt>112
+</span><span class=lnt>113
+</span><span class=lnt>114
+</span><span class=lnt>115
+</span><span class=lnt>116
+</span><span class=lnt>117
+</span><span class=lnt>118
+</span><span class=lnt>119
+</span><span class=lnt>120
+</span><span class=lnt>121
+</span><span class=lnt>122
+</span><span class=lnt>123
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=c># Source: mysql-operator/templates/statefulset.yaml</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>apps/v1</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>StatefulSet</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>helm.sh/chart</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator-0.6.2</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/instance</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/version</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;v0.6.2&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/managed-by</span><span class=p>:</span><span class=w> </span><span class=l>Helm</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>replicas</span><span class=p>:</span><span class=w> </span><span class=m>1</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>serviceName</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator-orc</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>podManagementPolicy</span><span class=p>:</span><span class=w> </span><span class=l>Parallel</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>selector</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>matchLabels</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>app.kubernetes.io/name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>app.kubernetes.io/instance</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>template</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>annotations</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>checksum/orchestrator-config</span><span class=p>:</span><span class=w> </span><span class=l>301f994fcecde72ab6be4371173a860c68b440504210a400a8105c833311443b</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>checksum/orchestrator-secret</span><span class=p>:</span><span class=w> </span><span class=l>20304c64003f30460df7e5cdcc078d3bc55b882af412ed1d43ced6a765f1c160</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>app.kubernetes.io/name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>app.kubernetes.io/instance</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>serviceAccountName</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>securityContext</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>fsGroup</span><span class=p>:</span><span class=w> </span><span class=m>65532</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>runAsGroup</span><span class=p>:</span><span class=w> </span><span class=m>65532</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>runAsNonRoot</span><span class=p>:</span><span class=w> </span><span class=kc>true</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>runAsUser</span><span class=p>:</span><span class=w> </span><span class=m>65532</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>containers</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>securityContext</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span>{}<span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>image</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;docker.io/bitpoke/mysql-operator:v0.6.2&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>imagePullPolicy</span><span class=p>:</span><span class=w> </span><span class=l>IfNotPresent</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>ports</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span>- <span class=nt>containerPort</span><span class=p>:</span><span class=w> </span><span class=m>8080</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>prometheus</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>protocol</span><span class=p>:</span><span class=w> </span><span class=l>TCP</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>env</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>ORC_TOPOLOGY_USER</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>valueFrom</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nt>secretKeyRef</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator-orc</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                  </span><span class=nt>key</span><span class=p>:</span><span class=w> </span><span class=l>TOPOLOGY_USER</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>ORC_TOPOLOGY_PASSWORD</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>valueFrom</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nt>secretKeyRef</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator-orc</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                  </span><span class=nt>key</span><span class=p>:</span><span class=w> </span><span class=l>TOPOLOGY_PASSWORD</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>args</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span>- --<span class=l>leader-election-namespace=mysql</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span>- --<span class=l>orchestrator-uri=http://mysql-operator.mysql/api</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span>- --<span class=l>sidecar-image=docker.io/bitpoke/mysql-operator-sidecar-5.7:v0.6.2</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span>- --<span class=l>sidecar-mysql8-image=docker.io/bitpoke/mysql-operator-sidecar-8.0:v0.6.2</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span>- --<span class=l>failover-before-shutdown=true</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>livenessProbe</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=nt>httpGet</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>path</span><span class=p>:</span><span class=w> </span><span class=l>/healthz</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>port</span><span class=p>:</span><span class=w> </span><span class=m>8081</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>readinessProbe</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=nt>httpGet</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>path</span><span class=p>:</span><span class=w> </span><span class=l>/readyz</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>port</span><span class=p>:</span><span class=w> </span><span class=m>8081</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>resources</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span>{}<span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>orchestrator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>securityContext</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span>{}<span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>image</span><span class=p>:</span><span class=w> </span><span class=l>docker.io/bitpoke/mysql-operator-orchestrator:v0.6.2</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>imagePullPolicy</span><span class=p>:</span><span class=w> </span><span class=l>IfNotPresent</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>ports</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span>- <span class=nt>containerPort</span><span class=p>:</span><span class=w> </span><span class=m>3000</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>http</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>protocol</span><span class=p>:</span><span class=w> </span><span class=l>TCP</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span>- <span class=nt>containerPort</span><span class=p>:</span><span class=w> </span><span class=m>10008</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>raft</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>protocol</span><span class=p>:</span><span class=w> </span><span class=l>TCP</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>env</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>POD_IP</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>valueFrom</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nt>fieldRef</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                  </span><span class=nt>fieldPath</span><span class=p>:</span><span class=w> </span><span class=l>status.podIP</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>envFrom</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span>- <span class=nt>prefix</span><span class=p>:</span><span class=w> </span><span class=l>ORC_</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>secretRef</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>                </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator-orc</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>volumeMounts</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>data</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>mountPath</span><span class=p>:</span><span class=w> </span><span class=l>/var/lib/orchestrator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>config</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>mountPath</span><span class=p>:</span><span class=w> </span><span class=l>/usr/local/share/orchestrator/templates</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>livenessProbe</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=nt>timeoutSeconds</span><span class=p>:</span><span class=w> </span><span class=m>10</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=nt>initialDelaySeconds</span><span class=p>:</span><span class=w> </span><span class=m>200</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=nt>httpGet</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>path</span><span class=p>:</span><span class=w> </span><span class=l>/api/lb-check</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>port</span><span class=p>:</span><span class=w> </span><span class=m>3000</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=c># https://github.com/github/orchestrator/blob/master/docs/raft.md#proxy-healthy-raft-nodes</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>readinessProbe</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=nt>timeoutSeconds</span><span class=p>:</span><span class=w> </span><span class=m>10</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=nt>httpGet</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>path</span><span class=p>:</span><span class=w> </span><span class=l>/api/raft-health</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>port</span><span class=p>:</span><span class=w> </span><span class=m>3000</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>resources</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span>{}<span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>volumes</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>config</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>configMap</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator-orc</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>volumeClaimTemplates</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>data</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>accessModes</span><span class=p>:</span><span class=w> </span><span class=p>[</span><span class=w> </span><span class=l>ReadWriteOnce ]</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>        </span><span class=nt>resources</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>requests</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=nt>storage</span><span class=p>:</span><span class=w> </span><span class=l>1Gi</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><p>从描述中可以看到，一个pod里面会有两个container，分别启动 orchestrator 和 operator。</p><h4 id=operator-容器 class=headerLink><a href=#operator-%e5%ae%b9%e5%99%a8 class=header-mark></a>operator 容器</h4><ul><li>使用名字为 mysql-operator 的 serviceAccount 来做事件处理</li><li>声明 8080 的 prometheus 端口</li><li>在 livenessProbe 和 readinessProbe 里面出现了 8081 端口，但没有声明，所以只能 locahost 使用。</li><li>需要从 mysql-operator-orc secret 获取两个值当做自己的环境变量 ORC_TOPOLOGY_USER 和 ORC_TOPOLOGY_PASSWORD；</li><li>同时还有一些启动参数</li></ul><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl>- --<span class=l>leader-election-namespace=mysql                                            </span><span class=w> </span><span class=c># 如果安装时pod不是单副本，需要选主，这里是指定选主的ns</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span>- --<span class=l>orchestrator-uri=http://mysql-operator.mysql/api                           </span><span class=w> </span><span class=c># operator 为了和 orchestrator 通信</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span>- --<span class=l>sidecar-image=docker.io/bitpoke/mysql-operator-sidecar-5.7:v0.6.2          </span><span class=w> </span><span class=c># 5.7 版本的 mysql sidecar 镜像</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span>- --<span class=l>sidecar-mysql8-image=docker.io/bitpoke/mysql-operator-sidecar-8.0:v0.6.2   </span><span class=w> </span><span class=c># 8.0 版本的 mysql sidecar 镜像。因为 mysql 版本差异导致备份恢复的 xtrabackup 软件版本不同。</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span>- --<span class=l>failover-before-shutdown=true</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><h4 id=orchestrator-容器 class=headerLink><a href=#orchestrator-%e5%ae%b9%e5%99%a8 class=header-mark></a>orchestrator 容器</h4><ul><li>声明 3000 的 http 服务端口</li><li>声明 10008 的 raft 消息同步端口</li><li>也需要从 mysql-operator-orc secret 获取值当做自己的环境变量</li><li>声明一个 volume 并挂载到 /var/lib/orchestrator(这里是为了存储 orchestrator 管理的元数据)</li><li>从 mysql-operator-orc configmap 获取配置并挂载到 /usr/local/share/orchestrator/templates(orchestrator启动的配置文件)</li></ul><h3 id=configmap class=headerLink><a href=#configmap class=header-mark></a>ConfigMap</h3><p>helm install 安装时的内容如下：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=c># Source: mysql-operator/templates/orchestrator-config.yaml</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>ConfigMap</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator-orc</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>helm.sh/chart</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator-0.6.2</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/instance</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/version</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;v0.6.2&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/managed-by</span><span class=p>:</span><span class=w> </span><span class=l>Helm</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>data</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>orchestrator.conf.json</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;{..........}&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>orc-topology.cnf</span><span class=p>:</span><span class=w> </span><span class=p>|</span><span class=sd>
+</span></span></span><span class=line><span class=cl><span class=sd>    [client]
+</span></span></span><span class=line><span class=cl><span class=sd>    user = {{ .Env.ORC_TOPOLOGY_USER }}
+</span></span></span><span class=line><span class=cl><span class=sd>    password = {{ .Env.ORC_TOPOLOGY_PASSWORD }}</span><span class=w>    
+</span></span></span></code></pre></td></tr></table></div></div><p>在 StatefulSet 部分已经解释</p><ul><li>orchestrator.conf.json 是 orchestrator 启动需要使用的配置文件。</li><li>orc-topology.cnf 是 orchestrator 访问数据库的账号密码。</li></ul><p>配置信息如下（相关描述可以从<a href=https://github.com/openark/orchestrator/blob/master/docs/configuration.md target=_blank rel="noopener noreferrer">官网查阅</a>）：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>$ cat /usr/local/share/orchestrator/templates/orchestrator.conf.json
+</span></span><span class=line><span class=cl><span class=o>{</span>
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;ApplyMySQLPromotionAfterMasterFailover&#34;</span>: true,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;BackendDB&#34;</span>: <span class=s2>&#34;sqlite&#34;</span>,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;Debug&#34;</span>: false,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;DetachLostReplicasAfterMasterFailover&#34;</span>: true,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;DetectClusterAliasQuery&#34;</span>: <span class=s2>&#34;SELECT CONCAT(SUBSTRING(@@hostname, 1, LENGTH(@@hostname) - 1 - LENGTH(SUBSTRING_INDEX(@@hostname,&#39;-&#39;,-2))),&#39;.&#39;,SUBSTRING_INDEX(@@report_host,&#39;.&#39;,-1))&#34;</span>,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;DetectInstanceAliasQuery&#34;</span>: <span class=s2>&#34;SELECT @@hostname&#34;</span>,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;DiscoverByShowSlaveHosts&#34;</span>: false,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;FailMasterPromotionIfSQLThreadNotUpToDate&#34;</span>: true,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;HTTPAdvertise&#34;</span>: <span class=s2>&#34;http://{{ .Env.HOSTNAME }}.mysql-operator-orc:3000&#34;</span>,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;HostnameResolveMethod&#34;</span>: <span class=s2>&#34;none&#34;</span>,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;InstancePollSeconds&#34;</span>: 5,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;ListenAddress&#34;</span>: <span class=s2>&#34;:3000&#34;</span>,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;MasterFailoverLostInstancesDowntimeMinutes&#34;</span>: 10,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;MySQLHostnameResolveMethod&#34;</span>: <span class=s2>&#34;@@report_host&#34;</span>,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;MySQLTopologyCredentialsConfigFile&#34;</span>: <span class=s2>&#34;/etc/orchestrator/orc-topology.cnf&#34;</span>,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;OnFailureDetectionProcesses&#34;</span>: <span class=o>[</span>
+</span></span><span class=line><span class=cl>    <span class=s2>&#34;/usr/local/bin/orc-helper event -w &#39;{failureClusterAlias}&#39; &#39;OrcFailureDetection&#39; &#39;Failure: {failureType}, failed host: {failedHost}, lost replcas: {lostReplicas}&#39; || true&#34;</span>,
+</span></span><span class=line><span class=cl>    <span class=s2>&#34;/usr/local/bin/orc-helper failover-in-progress &#39;{failureClusterAlias}&#39; &#39;{failureDescription}&#39; || true&#34;</span>
+</span></span><span class=line><span class=cl>  <span class=o>]</span>,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;PostIntermediateMasterFailoverProcesses&#34;</span>: <span class=o>[</span>
+</span></span><span class=line><span class=cl>    <span class=s2>&#34;/usr/local/bin/orc-helper event &#39;{failureClusterAlias}&#39; &#39;OrcPostIntermediateMasterFailover&#39; &#39;Failure type: {failureType}, failed hosts: {failedHost}, slaves: {countSlaves}&#39; || true&#34;</span>
+</span></span><span class=line><span class=cl>  <span class=o>]</span>,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;PostMasterFailoverProcesses&#34;</span>: <span class=o>[</span>
+</span></span><span class=line><span class=cl>    <span class=s2>&#34;/usr/local/bin/orc-helper event &#39;{failureClusterAlias}&#39; &#39;OrcPostMasterFailover&#39; &#39;Failure type: {failureType}, new master: {successorHost}, slaves: {slaveHosts}&#39; || true&#34;</span>
+</span></span><span class=line><span class=cl>  <span class=o>]</span>,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;PostUnsuccessfulFailoverProcesses&#34;</span>: <span class=o>[</span>
+</span></span><span class=line><span class=cl>    <span class=s2>&#34;/usr/local/bin/orc-helper event -w &#39;{failureClusterAlias}&#39; &#39;OrcPostUnsuccessfulFailover&#39; &#39;Failure: {failureType}, failed host: {failedHost} with {countSlaves} slaves&#39; || true&#34;</span>
+</span></span><span class=line><span class=cl>  <span class=o>]</span>,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;PreFailoverProcesses&#34;</span>: <span class=o>[</span>
+</span></span><span class=line><span class=cl>    <span class=s2>&#34;/usr/local/bin/orc-helper failover-in-progress &#39;{failureClusterAlias}&#39; &#39;{failureDescription}&#39; || true&#34;</span>
+</span></span><span class=line><span class=cl>  <span class=o>]</span>,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;ProcessesShellCommand&#34;</span>: <span class=s2>&#34;sh&#34;</span>,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;RaftAdvertise&#34;</span>: <span class=s2>&#34;{{ .Env.HOSTNAME }}.mysql-operator-orc&#34;</span>,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;RaftBind&#34;</span>: <span class=s2>&#34;{{ .Env.HOSTNAME }}&#34;</span>,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;RaftDataDir&#34;</span>: <span class=s2>&#34;/var/lib/orchestrator&#34;</span>,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;RaftEnabled&#34;</span>: true,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;RaftNodes&#34;</span>: <span class=o>[]</span>,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;RecoverIntermediateMasterClusterFilters&#34;</span>: <span class=o>[</span>
+</span></span><span class=line><span class=cl>    <span class=s2>&#34;.*&#34;</span>
+</span></span><span class=line><span class=cl>  <span class=o>]</span>,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;RecoverMasterClusterFilters&#34;</span>: <span class=o>[</span>
+</span></span><span class=line><span class=cl>    <span class=s2>&#34;.*&#34;</span>
+</span></span><span class=line><span class=cl>  <span class=o>]</span>,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;RecoveryIgnoreHostnameFilters&#34;</span>: <span class=o>[]</span>,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;RecoveryPeriodBlockSeconds&#34;</span>: 300,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;RemoveTextFromHostnameDisplay&#34;</span>: <span class=s2>&#34;:3306&#34;</span>,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;SQLite3DataFile&#34;</span>: <span class=s2>&#34;/var/lib/orchestrator/orc.db&#34;</span>,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;SlaveLagQuery&#34;</span>: <span class=s2>&#34;SELECT TIMESTAMPDIFF(SECOND,ts,UTC_TIMESTAMP()) as drift FROM sys_operator.heartbeat ORDER BY drift ASC LIMIT 1&#34;</span>,
+</span></span><span class=line><span class=cl>  <span class=s2>&#34;UnseenInstanceForgetHours&#34;</span>: <span class=m>1</span>
+</span></span><span class=line><span class=cl><span class=o>}</span>
+</span></span></code></pre></td></tr></table></div></div><h3 id=secret class=headerLink><a href=#secret class=header-mark></a>Secret</h3><p>helm install 安装时的内容如下：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=c># Source: mysql-operator/templates/orchestrator-secret.yaml</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>Secret</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator-orc</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>helm.sh/chart</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator-0.6.2</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/instance</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/version</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;v0.6.2&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/managed-by</span><span class=p>:</span><span class=w> </span><span class=l>Helm</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>data</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>TOPOLOGY_USER</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;b3JjaGVzdHJhdG9y&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>TOPOLOGY_PASSWORD</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;aVdZZndhMzJHZw==&#34;</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><p>从 key 可以看出这就是 orchestrator 需要的元数据账号密码信息，使用base64解析出原文</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=l>$ echo &#39;b3JjaGVzdHJhdG9y&#39; | base64 -d</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=l>orchestrator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=l>$ echo &#39;aVdZZndhMzJHZw==&#39; | base64 -d</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=l>iWYfwa32Gg</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><h3 id=service class=headerLink><a href=#service class=header-mark></a>Service</h3><p>helm install 安装时的内容如下：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span><span class=lnt>34
+</span><span class=lnt>35
+</span><span class=lnt>36
+</span><span class=lnt>37
+</span><span class=lnt>38
+</span><span class=lnt>39
+</span><span class=lnt>40
+</span><span class=lnt>41
+</span><span class=lnt>42
+</span><span class=lnt>43
+</span><span class=lnt>44
+</span><span class=lnt>45
+</span><span class=lnt>46
+</span><span class=lnt>47
+</span><span class=lnt>48
+</span><span class=lnt>49
+</span><span class=lnt>50
+</span><span class=lnt>51
+</span><span class=lnt>52
+</span><span class=lnt>53
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=c># Source: mysql-operator/templates/service.yaml</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>Service</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>helm.sh/chart</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator-0.6.2</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/instance</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/version</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;v0.6.2&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/managed-by</span><span class=p>:</span><span class=w> </span><span class=l>Helm</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/component</span><span class=p>:</span><span class=w> </span><span class=l>operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>type</span><span class=p>:</span><span class=w> </span><span class=l>ClusterIP</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>ports</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=nt>port</span><span class=p>:</span><span class=w> </span><span class=m>80</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>http</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>protocol</span><span class=p>:</span><span class=w> </span><span class=l>TCP</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>targetPort</span><span class=p>:</span><span class=w> </span><span class=l>http</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=nt>port</span><span class=p>:</span><span class=w> </span><span class=m>9125</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>prometheus</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>protocol</span><span class=p>:</span><span class=w> </span><span class=l>TCP</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>targetPort</span><span class=p>:</span><span class=w> </span><span class=l>prometheus</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>selector</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/instance</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nn>---</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=c># Source: mysql-operator/templates/orchestrator-raft-service.yaml</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>Service</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator-orc</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/component</span><span class=p>:</span><span class=w> </span><span class=l>orchestrator-raft</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>helm.sh/chart</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator-0.6.2</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/instance</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/version</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;v0.6.2&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/managed-by</span><span class=p>:</span><span class=w> </span><span class=l>Helm</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>type</span><span class=p>:</span><span class=w> </span><span class=l>ClusterIP</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>clusterIP</span><span class=p>:</span><span class=w> </span><span class=l>None</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>publishNotReadyAddresses</span><span class=p>:</span><span class=w> </span><span class=kc>true</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>ports</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>http</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>port</span><span class=p>:</span><span class=w> </span><span class=m>80</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>targetPort</span><span class=p>:</span><span class=w> </span><span class=m>3000</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>raft</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>port</span><span class=p>:</span><span class=w> </span><span class=m>10008</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>targetPort</span><span class=p>:</span><span class=w> </span><span class=m>10008</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>selector</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/instance</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><p>以上有2个service，虽然 type 都是 ClusterIP，但是 mysql-operator-orc 还有个 clusterIP: None，这个配置表示该 service 是个 Headless Service，不需要额外的 ip。</p><ul><li>mysql-operator-orc 有两个端口<ul><li>80：targetPort 是 3000，orchestrator 的<a href=https://github.com/openark/orchestrator/blob/master/docs/configuration-backend.md target=_blank rel="noopener noreferrer">可视化页面和api服务接口</a></li><li>10008：targetPort 是 10008，这个端口是 orchestrator 多副本之前进行 <a href=https://github.com/openark/orchestrator/blob/master/docs/raft.md target=_blank rel="noopener noreferrer">raft 消息同步使用</a></li></ul></li><li>mysql-operator 也有两个端口<ul><li>80：targetPort 是 http，查询发现还是 orchestrator 的 3000 端口</li><li>9125：targetPort 是 prometheus，prometheus 在 StatefulSet中被定义到了 operator 容器的 8080 端口，通过 <code>curl http://127.0.0.1:8080/metrics</code> 可以查看到 operator 的指标数据</li></ul></li></ul><h3 id=serviceaccountclusterroleclusterrolebinding class=headerLink><a href=#serviceaccountclusterroleclusterrolebinding class=header-mark></a>ServiceAccount、ClusterRole、ClusterRoleBinding</h3><p>helm install 安装时的内容如下：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>  1
+</span><span class=lnt>  2
+</span><span class=lnt>  3
+</span><span class=lnt>  4
+</span><span class=lnt>  5
+</span><span class=lnt>  6
+</span><span class=lnt>  7
+</span><span class=lnt>  8
+</span><span class=lnt>  9
+</span><span class=lnt> 10
+</span><span class=lnt> 11
+</span><span class=lnt> 12
+</span><span class=lnt> 13
+</span><span class=lnt> 14
+</span><span class=lnt> 15
+</span><span class=lnt> 16
+</span><span class=lnt> 17
+</span><span class=lnt> 18
+</span><span class=lnt> 19
+</span><span class=lnt> 20
+</span><span class=lnt> 21
+</span><span class=lnt> 22
+</span><span class=lnt> 23
+</span><span class=lnt> 24
+</span><span class=lnt> 25
+</span><span class=lnt> 26
+</span><span class=lnt> 27
+</span><span class=lnt> 28
+</span><span class=lnt> 29
+</span><span class=lnt> 30
+</span><span class=lnt> 31
+</span><span class=lnt> 32
+</span><span class=lnt> 33
+</span><span class=lnt> 34
+</span><span class=lnt> 35
+</span><span class=lnt> 36
+</span><span class=lnt> 37
+</span><span class=lnt> 38
+</span><span class=lnt> 39
+</span><span class=lnt> 40
+</span><span class=lnt> 41
+</span><span class=lnt> 42
+</span><span class=lnt> 43
+</span><span class=lnt> 44
+</span><span class=lnt> 45
+</span><span class=lnt> 46
+</span><span class=lnt> 47
+</span><span class=lnt> 48
+</span><span class=lnt> 49
+</span><span class=lnt> 50
+</span><span class=lnt> 51
+</span><span class=lnt> 52
+</span><span class=lnt> 53
+</span><span class=lnt> 54
+</span><span class=lnt> 55
+</span><span class=lnt> 56
+</span><span class=lnt> 57
+</span><span class=lnt> 58
+</span><span class=lnt> 59
+</span><span class=lnt> 60
+</span><span class=lnt> 61
+</span><span class=lnt> 62
+</span><span class=lnt> 63
+</span><span class=lnt> 64
+</span><span class=lnt> 65
+</span><span class=lnt> 66
+</span><span class=lnt> 67
+</span><span class=lnt> 68
+</span><span class=lnt> 69
+</span><span class=lnt> 70
+</span><span class=lnt> 71
+</span><span class=lnt> 72
+</span><span class=lnt> 73
+</span><span class=lnt> 74
+</span><span class=lnt> 75
+</span><span class=lnt> 76
+</span><span class=lnt> 77
+</span><span class=lnt> 78
+</span><span class=lnt> 79
+</span><span class=lnt> 80
+</span><span class=lnt> 81
+</span><span class=lnt> 82
+</span><span class=lnt> 83
+</span><span class=lnt> 84
+</span><span class=lnt> 85
+</span><span class=lnt> 86
+</span><span class=lnt> 87
+</span><span class=lnt> 88
+</span><span class=lnt> 89
+</span><span class=lnt> 90
+</span><span class=lnt> 91
+</span><span class=lnt> 92
+</span><span class=lnt> 93
+</span><span class=lnt> 94
+</span><span class=lnt> 95
+</span><span class=lnt> 96
+</span><span class=lnt> 97
+</span><span class=lnt> 98
+</span><span class=lnt> 99
+</span><span class=lnt>100
+</span><span class=lnt>101
+</span><span class=lnt>102
+</span><span class=lnt>103
+</span><span class=lnt>104
+</span><span class=lnt>105
+</span><span class=lnt>106
+</span><span class=lnt>107
+</span><span class=lnt>108
+</span><span class=lnt>109
+</span><span class=lnt>110
+</span><span class=lnt>111
+</span><span class=lnt>112
+</span><span class=lnt>113
+</span><span class=lnt>114
+</span><span class=lnt>115
+</span><span class=lnt>116
+</span><span class=lnt>117
+</span><span class=lnt>118
+</span><span class=lnt>119
+</span><span class=lnt>120
+</span><span class=lnt>121
+</span><span class=lnt>122
+</span><span class=lnt>123
+</span><span class=lnt>124
+</span><span class=lnt>125
+</span><span class=lnt>126
+</span><span class=lnt>127
+</span><span class=lnt>128
+</span><span class=lnt>129
+</span><span class=lnt>130
+</span><span class=lnt>131
+</span><span class=lnt>132
+</span><span class=lnt>133
+</span><span class=lnt>134
+</span><span class=lnt>135
+</span><span class=lnt>136
+</span><span class=lnt>137
+</span><span class=lnt>138
+</span><span class=lnt>139
+</span><span class=lnt>140
+</span><span class=lnt>141
+</span><span class=lnt>142
+</span><span class=lnt>143
+</span><span class=lnt>144
+</span><span class=lnt>145
+</span><span class=lnt>146
+</span><span class=lnt>147
+</span><span class=lnt>148
+</span><span class=lnt>149
+</span><span class=lnt>150
+</span><span class=lnt>151
+</span><span class=lnt>152
+</span><span class=lnt>153
+</span><span class=lnt>154
+</span><span class=lnt>155
+</span><span class=lnt>156
+</span><span class=lnt>157
+</span><span class=lnt>158
+</span><span class=lnt>159
+</span><span class=lnt>160
+</span><span class=lnt>161
+</span><span class=lnt>162
+</span><span class=lnt>163
+</span><span class=lnt>164
+</span><span class=lnt>165
+</span><span class=lnt>166
+</span><span class=lnt>167
+</span><span class=lnt>168
+</span><span class=lnt>169
+</span><span class=lnt>170
+</span><span class=lnt>171
+</span><span class=lnt>172
+</span><span class=lnt>173
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=c># Source: mysql-operator/templates/serviceaccount.yaml</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>ServiceAccount</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>helm.sh/chart</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator-0.6.2</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/instance</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/version</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;v0.6.2&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/managed-by</span><span class=p>:</span><span class=w> </span><span class=l>Helm</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nn>---</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=c># Source: mysql-operator/templates/clusterrole.yaml</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>rbac.authorization.k8s.io/v1</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>ClusterRole</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>helm.sh/chart</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator-0.6.2</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/instance</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/version</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;v0.6.2&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/managed-by</span><span class=p>:</span><span class=w> </span><span class=l>Helm</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>rules</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span>- <span class=nt>apiGroups</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>apps</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>resources</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>statefulsets</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>verbs</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>create</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>delete</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>get</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>list</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>patch</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>update</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>watch</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span>- <span class=nt>apiGroups</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>batch</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>resources</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>jobs</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>verbs</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>create</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>delete</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>get</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>list</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>patch</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>update</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>watch</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span>- <span class=nt>apiGroups</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>coordination.k8s.io</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>resources</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>leases</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>verbs</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>create</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>delete</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>get</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>list</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>patch</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>update</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>watch</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span>- <span class=nt>apiGroups</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=s2>&#34;&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>resources</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>configmaps</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>events</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>jobs</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>persistentvolumeclaims</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>pods</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>secrets</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>services</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>verbs</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>create</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>delete</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>get</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>list</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>patch</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>update</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>watch</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span>- <span class=nt>apiGroups</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=s2>&#34;&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>resources</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>pods/status</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>verbs</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>create</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>delete</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>get</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>list</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>patch</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>update</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>watch</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span>- <span class=nt>apiGroups</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>mysql.presslabs.org</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>resources</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>mysqlbackups</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>verbs</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>create</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>delete</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>get</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>list</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>patch</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>update</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>watch</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span>- <span class=nt>apiGroups</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>mysql.presslabs.org</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>resources</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>mysqlclusters</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>mysqlclusters/status</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>verbs</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>create</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>delete</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>get</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>list</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>patch</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>update</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>watch</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span>- <span class=nt>apiGroups</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>mysql.presslabs.org</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>resources</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>mysqldatabases</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>mysqldatabases/status</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>verbs</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>create</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>delete</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>get</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>list</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>patch</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>update</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>watch</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span>- <span class=nt>apiGroups</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>mysql.presslabs.org</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>resources</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>mysqlusers</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>mysqlusers/status</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>verbs</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>create</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>delete</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>get</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>list</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>patch</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>update</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>watch</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span>- <span class=nt>apiGroups</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>policy</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>resources</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>poddisruptionbudgets</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>verbs</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>create</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>delete</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>get</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>list</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>patch</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>update</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=l>watch</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nn>---</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=c># Source: mysql-operator/templates/clusterrolebinding.yaml</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>rbac.authorization.k8s.io/v1</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>ClusterRoleBinding</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>labels</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>helm.sh/chart</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator-0.6.2</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/instance</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/version</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;v0.6.2&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>app.kubernetes.io/managed-by</span><span class=p>:</span><span class=w> </span><span class=l>Helm</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>roleRef</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>apiGroup</span><span class=p>:</span><span class=w> </span><span class=l>rbac.authorization.k8s.io</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>ClusterRole</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>subjects</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>namespace</span><span class=p>:</span><span class=w> </span><span class=s2>&#34;mysql&#34;</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>ServiceAccount</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><p>在这里要引入k8s一个重要的概念 RBAC(Role Base Access Control)，是一种权限控制机制，用于实现账户和权限的组合管理</p><ul><li>通过 ClusterRole 来声明都能操作那些api；</li><li>通过 ServiceAccount 创建一个账户；</li><li>最后通过 ClusterRoleBinding 将两者绑定。</li></ul><h4 id=补充 class=headerLink><a href=#%e8%a1%a5%e5%85%85 class=header-mark></a>补充</h4><p>另外每次创建一个 sa 的时候都会生成一个对应的 token secret：</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span><span class=lnt>29
+</span><span class=lnt>30
+</span><span class=lnt>31
+</span><span class=lnt>32
+</span><span class=lnt>33
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>$ kubectl create namespace sa-test
+</span></span><span class=line><span class=cl>namespace/sa-test created
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>$ kubectl create serviceaccount <span class=nb>test</span>
+</span></span><span class=line><span class=cl>serviceaccount/test created
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>$ kubectl get secret -n sa-test
+</span></span><span class=line><span class=cl>NAME                  TYPE                                  DATA   AGE
+</span></span><span class=line><span class=cl>default-token-6mdbt   kubernetes.io/service-account-token   <span class=m>3</span>      31s
+</span></span><span class=line><span class=cl>
+</span></span><span class=line><span class=cl>$ kubectl get secret -n sa-test -o yaml
+</span></span><span class=line><span class=cl>apiVersion: v1
+</span></span><span class=line><span class=cl>items:
+</span></span><span class=line><span class=cl>- apiVersion: v1
+</span></span><span class=line><span class=cl>  data:
+</span></span><span class=line><span class=cl>    ca.crt: <span class=nv>LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSUM1ekNDQWMrZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREFWTVJNd0VRWURWUVFERXdwcmRXSmwKY201bGRHVnpNQjRYRFRJek1ETXhOekF5TlRrek1sb1hEVE16TURNeE5EQXlOVGt6TWxvd0ZURVRNQkVHQTFVRQpBeE1LYTNWaVpYSnVaWFJsY3pDQ0FTSXdEUVlKS29aSWh2Y05BUUVCQlFBRGdnRVBBRENDQVFvQ2dnRUJBT3lKCm1ScE51Q21tVGM5dXNKbVJGMEo0Umw1bElQeE1iM0psQ0dONGF5Ry9IZXFEcmJlZnFLMzZJWmFYZVhNbi9Zb0wKMkM3Mktmd1Z3UnJuUldmZkt6L3k0UFR1bkRVUHpNa1BOMloybVRmbENuRG1ENEVjdGk4SVVNeS81ZWtVZ0kvLwppaEh6MllrKzVLb1RISmozc1VrTFRyV2llc0E3WVV6WkZnTGRmZkU2Yjh1WVExSzZtTW1yeWtjSVdyTVJqNEMyCkZ1SjM2a1VqNEJWK1luRVRMNnAxb1FxZWJqa1I2dFZWajZvb25ZNmNHejBUc0JldE03M3FrRTBBUnBFVm1kb3cKSWY1MmVJN0U0WFBuNWtHQk9RZ3k1OE5tNHdzQmEvYTlIbEtCSUFMUm9vaDdyamhHbmpCT1ZtNnFMcDRjdUVkUwpqellONE9WdWtaQ2M1cGRLRVdNQ0F3RUFBYU5DTUVBd0RnWURWUjBQQVFIL0JBUURBZ0trTUE4R0ExVWRFd0VCCi93UUZNQU1CQWY4d0hRWURWUjBPQkJZRUZFME5mWDRsdnEyRjF3MXlVVElYSE5QNVRGSFVNQTBHQ1NxR1NJYjMKRFFFQkN3VUFBNElCQVFCcFQreWwxcVE0Rm5wRjBOait6aVIxR2dZNnRkOXFkMkVaVmdqZ0t3bE1RcDdXSnJQaAo0cnZYTEg5SnhzTmc5Vkx3dGd0YklBall1a1J6dmo0b0ZNWGZGSmZTWlFONDBZTVhIdUl6dXQvNDRKeGp1MTNWClVqWDgrYWNmVG82TzZmc2JYdFpDR1g4UzFxZWRLUDZnbEFhOEh3dTNNbmJiRHdHYjdrcW51Uk81bTN0Z1B1Rm8KVnZRbnhkYjdzNmNIMUo5SjV1bURjMjVONk9BOGVrRzFROVM5Mk9pZDF6aitGZXQrOE55ZFE1ZFBVbWFUazhzdQpMaERjQTJ2TURuR0FrbnFGWWZkWjc5ejJnNlhlY1BCNE1LV2Frd25kZ1NxU2dtOXJKenBNTDFkU0ZTWHpjaEJYCitNc1FPNm5yNkZBMytsbkhrS1BrTWhsYnl5WE91OWNOSkNIQQotLS0tLUVORCBDRVJUSUZJQ0FURS0tLS0tCg</span><span class=o>==</span>
+</span></span><span class=line><span class=cl>    namespace: <span class=nv>c2EtdGVzdA</span><span class=o>==</span>
+</span></span><span class=line><span class=cl>    token: ZXlKaGJHY2lPaUpTVXpJMU5pSXNJbXRwWkNJNklrcERWMGRFWmtZeFNGbGhPRTFLTkVwSVNsQm9ZVlZ0YXpaeVZYaE5TamRvY0RScE1qQnFTMWcwTlVraWZRLmV5SnBjM01pT2lKcmRXSmxjbTVsZEdWekwzTmxjblpwWTJWaFkyTnZkVzUwSWl3aWEzVmlaWEp1WlhSbGN5NXBieTl6WlhKMmFXTmxZV05qYjNWdWRDOXVZVzFsYzNCaFkyVWlPaUp6WVMxMFpYTjBJaXdpYTNWaVpYSnVaWFJsY3k1cGJ5OXpaWEoyYVdObFlXTmpiM1Z1ZEM5elpXTnlaWFF1Ym1GdFpTSTZJbVJsWm1GMWJIUXRkRzlyWlc0dE5tMWtZblFpTENKcmRXSmxjbTVsZEdWekxtbHZMM05sY25acFkyVmhZMk52ZFc1MEwzTmxjblpwWTJVdFlXTmpiM1Z1ZEM1dVlXMWxJam9pWkdWbVlYVnNkQ0lzSW10MVltVnlibVYwWlhNdWFXOHZjMlZ5ZG1salpXRmpZMjkxYm5RdmMyVnlkbWxqWlMxaFkyTnZkVzUwTG5WcFpDSTZJamMwTkdVeFpqRTJMVFU1TldRdE5HVTNOaTA0TldVMUxUUXlZamRoWm1aak1tSXhNQ0lzSW5OMVlpSTZJbk41YzNSbGJUcHpaWEoyYVdObFlXTmpiM1Z1ZERwellTMTBaWE4wT21SbFptRjFiSFFpZlEuYVhqcXFpMGItUS1nTFJnSC1TUTY2T2hWMS1MWjhVZjlTeGplcUpVY0paVDQyUTBtcVl3MUY0cTl0cEtqQmVDSEhadnJiUENzaUZTMkRPbEtXM3I0aDFYZmpYemg0eTIwUnBvT1ZnT2tYOGhUWnZ5Q1BnUnZXWHBvTjBVZWYtNFotQUF4aFRWRnVWRWdqX1MzZGpiMUhSSVlsVHR3T3pnaVVnRWxZVFJWVFRFcDFySFBqQngtQUp5RGd4WlNqeEZQNWtJbGNRRzVTemZKQ3BzUXN6OWN3OFFwX1JPUlJwcExGVmExZGJNcFZjcXMzZDNCYWw0UXhfbEg2MnF5cXo4M1Z5a2RoUjVwN1JSSm8yZEpnNVZlVF9UVTZLdmpON21Qa2ctdjJPd3hQNkdHX1BrVm9xWHhpR2M4VkloLTZWeDNCdkF5Q1Y4LTRMTnZVVWt1TS1udkpR
+</span></span><span class=line><span class=cl>  kind: Secret
+</span></span><span class=line><span class=cl>  metadata:
+</span></span><span class=line><span class=cl>    annotations:
+</span></span><span class=line><span class=cl>      kubernetes.io/service-account.name: default
+</span></span><span class=line><span class=cl>      kubernetes.io/service-account.uid: 744e1f16-595d-4e76-85e5-42b7affc2b10
+</span></span><span class=line><span class=cl>    creationTimestamp: <span class=s2>&#34;2023-03-18T03:38:19Z&#34;</span>
+</span></span><span class=line><span class=cl>    name: default-token-6mdbt
+</span></span><span class=line><span class=cl>    namespace: sa-test
+</span></span><span class=line><span class=cl>    resourceVersion: <span class=s2>&#34;49219&#34;</span>
+</span></span><span class=line><span class=cl>    uid: 2bb22dc9-ee0f-48f9-922e-11001d96b2d7
+</span></span><span class=line><span class=cl>  type: kubernetes.io/service-account-token
+</span></span><span class=line><span class=cl>kind: List
+</span></span><span class=line><span class=cl>metadata:
+</span></span><span class=line><span class=cl>  resourceVersion: <span class=s2>&#34;&#34;</span>
+</span></span><span class=line><span class=cl>  selfLink: <span class=s2>&#34;&#34;</span>
+</span></span></code></pre></td></tr></table></div></div><p>使用时就是上面的 StatefulSet 用法，指定好 serviceAccountName</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span><span class=lnt>3
+</span><span class=lnt>4
+</span><span class=lnt>5
+</span><span class=lnt>6
+</span><span class=lnt>7
+</span><span class=lnt>8
+</span><span class=lnt>9
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>apps/v1</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>kind</span><span class=p>:</span><span class=w> </span><span class=l>StatefulSet</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>metadata</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w></span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>template</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>serviceAccountName</span><span class=p>:</span><span class=w> </span><span class=l>mysql-operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=c># ... ...</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><p>在运行起来后，查看pod描述，每个container都会有多一个volumeMount，并且可以看到 volume 的声明</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt> 1
+</span><span class=lnt> 2
+</span><span class=lnt> 3
+</span><span class=lnt> 4
+</span><span class=lnt> 5
+</span><span class=lnt> 6
+</span><span class=lnt> 7
+</span><span class=lnt> 8
+</span><span class=lnt> 9
+</span><span class=lnt>10
+</span><span class=lnt>11
+</span><span class=lnt>12
+</span><span class=lnt>13
+</span><span class=lnt>14
+</span><span class=lnt>15
+</span><span class=lnt>16
+</span><span class=lnt>17
+</span><span class=lnt>18
+</span><span class=lnt>19
+</span><span class=lnt>20
+</span><span class=lnt>21
+</span><span class=lnt>22
+</span><span class=lnt>23
+</span><span class=lnt>24
+</span><span class=lnt>25
+</span><span class=lnt>26
+</span><span class=lnt>27
+</span><span class=lnt>28
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-yaml data-lang=yaml><span class=line><span class=cl><span class=nt>spec</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>containers</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>operator</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c># ... ...</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>volumeMounts</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span>- <span class=nt>mountPath</span><span class=p>:</span><span class=w> </span><span class=l>/var/run/secrets/kubernetes.io/serviceaccount</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>kube-api-access-s5f2h</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>readOnly</span><span class=p>:</span><span class=w> </span><span class=kc>true</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=c># ... ...</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span><span class=nt>volumes</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>  </span>- <span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>kube-api-access-s5f2h</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>    </span><span class=nt>projected</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>defaultMode</span><span class=p>:</span><span class=w> </span><span class=m>420</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span><span class=nt>sources</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=nt>serviceAccountToken</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>expirationSeconds</span><span class=p>:</span><span class=w> </span><span class=m>3607</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>path</span><span class=p>:</span><span class=w> </span><span class=l>token</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=nt>configMap</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>items</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span>- <span class=nt>key</span><span class=p>:</span><span class=w> </span><span class=l>ca.crt</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=nt>path</span><span class=p>:</span><span class=w> </span><span class=l>ca.crt</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>name</span><span class=p>:</span><span class=w> </span><span class=l>kube-root-ca.crt</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>      </span>- <span class=nt>downwardAPI</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span><span class=nt>items</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>          </span>- <span class=nt>fieldRef</span><span class=p>:</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>apiVersion</span><span class=p>:</span><span class=w> </span><span class=l>v1</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>              </span><span class=nt>fieldPath</span><span class=p>:</span><span class=w> </span><span class=l>metadata.namespace</span><span class=w>
+</span></span></span><span class=line><span class=cl><span class=w>            </span><span class=nt>path</span><span class=p>:</span><span class=w> </span><span class=l>namespace</span><span class=w>
+</span></span></span></code></pre></td></tr></table></div></div><p>登录容器内部可以看到配置已经挂载</p><div class=highlight><div class=chroma><table class=lntable><tr><td class=lntd><pre tabindex=0 class=chroma><code><span class=lnt>1
+</span><span class=lnt>2
+</span></code></pre></td><td class=lntd><pre tabindex=0 class=chroma><code class=language-bash data-lang=bash><span class=line><span class=cl>$ ls /var/run/secrets/kubernetes.io/serviceaccount
+</span></span><span class=line><span class=cl>ca.crt     namespace  token
+</span></span></code></pre></td></tr></table></div></div><p>operator 启动时会从这个位置<a href=https://github.com/kubernetes/client-go/blob/release-14.0/rest/config.go#L451 target=_blank rel="noopener noreferrer">读取配置</a>然后初始化k8s-client。</p><p>这里不得不夸赞下k8s</p><ul><li>sa的获取的保存不用我们操心</li><li>sa的存储路径不用我们管理</li><li>sa配置载入的逻辑不用我们自己写</li></ul><h2 id=总结 class=headerLink><a href=#%e6%80%bb%e7%bb%93 class=header-mark></a>总结</h2><p>至此，通过安装mysql-operator和分析chart初步了解了资源组成，后续文章我们进入到mysql-operator内部，看看原理是如何实现的。</p></div><div class=post-footer id=post-footer><div class=post-info><div class=post-info-line><div class=post-info-mod><span>更新于 2023-03-12</span></div><div class=post-info-license></div></div><div class=post-info-line><div class=post-info-md><span><a class=link-to-mardown href=/mysql-operator-1-%E9%83%A8%E7%BD%B2/index.md target=_blank rel="noopener noreferrer">阅读原始文档</a></span></div><div class=post-info-share><span></span></div></div></div><div class=post-info-more><section class=post-tags><i class="fas fa-tags fa-fw"></i>&nbsp;<a href=/tags/mysql/>mysql</a>,&nbsp;<a href=/tags/operator/>operator</a></section><section><span><a href=javascript:void(0); onclick=window.history.back()>返回</a></span>&nbsp;|&nbsp;<span><a href=/>主页</a></span></section></div><div class=post-nav><a href=/mysql-operator-0/ class=prev rel=prev title="bitpoke/mysql-operator 技术解读系列 - 序"><i class="fas fa-angle-left fa-fw"></i>bitpoke/mysql-operator 技术解读系列 - 序</a></div></div><div id=comments><div id=giscus></div><noscript>Please enable JavaScript to view the comments powered by <a href=https://giscus.app/>giscus</a>.</noscript></div></article></div></main><footer class=footer><div class=footer-container><div class=footer-line><i class="far fa-copyright fa-fw"></i><span itemprop=copyrightYear>2019 - 2023</span><span class=author itemprop=copyrightHolder>&nbsp;<a href=/ target=_blank rel="noopener noreferrer">happyuncle</a></span>&nbsp;|&nbsp;<span class=license><a rel="license external nofollow noopener noreffer" href=https://creativecommons.org/licenses/by-nc/4.0/ target=_blank>CC BY-NC 4.0</a></span></div><div class=footer-line></div><div class=footer-line></div></div></footer></div><div id=fixed-buttons><a href=#back-to-top id=back-to-top-button class=fixed-button title=回到顶部><i class="fas fa-arrow-up fa-fw"></i>
+</a><a href=# id=view-comments class=fixed-button title=查看评论><i class="fas fa-comment fa-fw"></i></a></div><div id=cookieconsent-container></div><div class=assets><link rel=stylesheet href=/lib/katex/katex.min.css><link rel=preload as=style onload='this.onload=null,this.rel="stylesheet"' href=/lib/katex/copy-tex.min.css><noscript><link rel=stylesheet href=/lib/katex/copy-tex.min.css></noscript><link rel=stylesheet href=/lib/cookieconsent/cookieconsent.min.css><script type=text/javascript>window.config={code:{copyTitle:"复制到剪贴板",maxShownLines:10},comment:{giscus:{darkTheme:"dark",dataCategory:"Announcements",dataCategoryId:"DIC_kwDOJFSaWc4CUpIr",dataEmitMetadata:"0",dataInputPosition:"top",dataLang:"en",dataMapping:"pathname",dataReactionsEnabled:"1",dataRepo:"HappyUncle/happyuncle.github.io",dataRepoId:"R_kgDOJFSaWQ",dataStrict:"0",lightTheme:"light"}},cookieconsent:{content:{dismiss:"同意",link:"了解更多",message:"本网站使用 Cookies 来改善您的浏览体验."},enable:!0,palette:{button:{background:"#f0f0f0"},popup:{background:"#1aa3ff"}},theme:"edgeless"},data:{"desktop-header-typeit":"C4H","mobile-header-typeit":"C4H"},math:{delimiters:[{display:!0,left:"$$",right:"$$"},{display:!0,left:"\\[",right:"\\]"},{display:!1,left:"$",right:"$"},{display:!1,left:"\\(",right:"\\)"}],strict:!1},search:{distance:100,findAllMatches:!1,fuseIndexURL:"/index.json",highlightTag:"em",ignoreFieldNorm:!1,ignoreLocation:!1,isCaseSensitive:!1,location:0,maxResultLength:10,minMatchCharLength:2,noResultsFound:"没有找到结果",snippetLength:50,threshold:.3,type:"fuse",useExtendedSearch:!1},table:{sort:!0},typeit:{cursorChar:"|",cursorSpeed:1e3,data:{"desktop-header-typeit":["desktop-header-typeit"],"mobile-header-typeit":["mobile-header-typeit"]},duration:-1,speed:100}}</script><script type=text/javascript src=/js/giscus.min.js defer></script><script type=text/javascript src=/lib/tablesort/tablesort.min.js></script><script type=text/javascript src=/lib/clipboard/clipboard.min.js></script><script type=text/javascript src=/lib/typeit/typeit.min.js></script><script type=text/javascript src=/lib/katex/katex.min.js defer></script><script type=text/javascript src=/lib/katex/auto-render.min.js defer></script><script type=text/javascript src=/lib/katex/copy-tex.min.js defer></script><script type=text/javascript src=/lib/katex/mhchem.min.js defer></script><script type=text/javascript src=/js/katex.min.js defer></script><script type=text/javascript src=/lib/cookieconsent/cookieconsent.min.js defer></script><script type=text/javascript src=/js/cookieconsent.min.js defer></script><script type=text/javascript src=/js/theme.min.js defer></script><script type=text/javascript>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag("js",new Date),gtag("config","G-T9314S6XRH")</script><script type=text/javascript src="https://www.googletagmanager.com/gtag/js?id=G-T9314S6XRH" async></script><script>var _hmt=_hmt||[];(function(){var e,t=document.createElement("script");t.src="https://hm.baidu.com/hm.js?2dac9531c61d782d11f76c2c92995a7c",e=document.getElementsByTagName("script")[0],e.parentNode.insertBefore(t,e)})()</script></div></body></html>
