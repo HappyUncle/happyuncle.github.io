@@ -2,7 +2,7 @@
 
 ---
 
-## 命令
+## mysql-operator chart 说明
 
 安装 mysql-operator 的操作命令在[官方仓库](https://github.com/bitpoke/mysql-operator#controller-deploy)和[官网](https://www.bitpoke.io/docs/mysql-operator/getting-started/)都有说明，具体安装命令如下：
 
@@ -19,7 +19,7 @@ helm install mysql-operator bitpoke/mysql-operator
 - 因为mysql高可用是基于orchestrator实现的，orchestrator又需要一个元数据库，元数据库的账号密码可以通过 orchestrator.topologyUser 和 orchestrator.topologyPassword 指定。topologyUser默认值是 orchestrator，如果密码不指定会随机生成
 - (其他参数以后用到再说明)... ...
 
-## 本地部署
+## 在本地部署 mysql-operator
 
 - 添加 repo
 
@@ -82,11 +82,11 @@ statefulset.apps/mysql-operator   1/1     9m1s
 至此 mysql-operator 就算安装完成了。
 
 
-## 资源解读
+## mysql-operator 依赖资源解读
 
 上述的安装流程步骤很简单，但是运行起来的mysql-operator对我们来说就是一个黑盒，下面通过执行 helm template 对其被安装的内容进行梳理。
 
-### 梳理CRD
+### CRD 资源
 
 CRD 全程叫做 CustomResourceDefinition，详细信息可以从[官网](https://kubernetes.io/docs/concepts/extend-kubernetes/api-extension/custom-resources/)获取，这里不进行解释。
 
@@ -104,7 +104,7 @@ kind: CustomResourceDefinition
 
 从上面可以看到，安装mysql-operator的时候会创建4个CRD资源。从名称可以看出是分别是关于backup、cluster、database、user 相关的，也是本系列在后续篇章中要重点讲解的内容。
 
-### 梳理其他资源
+### 其他资源
 
 查看 mysql-operator 依赖的其他资源
 
