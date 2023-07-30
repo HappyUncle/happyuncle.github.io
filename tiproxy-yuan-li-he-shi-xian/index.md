@@ -1,4 +1,4 @@
-# Tiproxy 原理和实现
+# TiProxy 原理和实现
 
 
 ---
@@ -43,31 +43,31 @@ tiproxy 在 [2022年12月2日被operator支持](https://docs.pingcap.com/zh/tidb
 ```golang
 // 从 etcd 获取 tidb 拓扑 路径 /topology/tidb/<ip:port>/info /topology/tidb/<ip:port>/ttl
 func (is *InfoSyncer) GetTiDBTopology(ctx context.Context) (map[string]*TiDBInfo, error) {
-	res, err := is.etcdCli.Get(ctx, tidbinfo.TopologyInformationPath, clientv3.WithPrefix())
-	infos := make(map[string]*TiDBInfo, len(res.Kvs)/2)
-	for _, kv := range res.Kvs {
-		var ttl, addr string
-		var topology *tidbinfo.TopologyInfo
-		key := hack.String(kv.Key)
-		switch {
-		case strings.HasSuffix(key, ttlSuffix):
-			addr = key[len(tidbinfo.TopologyInformationPath)+1 : len(key)-len(ttlSuffix)-1]
-			ttl = hack.String(kv.Value)
-		case strings.HasSuffix(key, infoSuffix):
-			addr = key[len(tidbinfo.TopologyInformationPath)+1 : len(key)-len(infoSuffix)-1]
-			json.Unmarshal(kv.Value, &topology)
-		default:
-			continue
-		}
+    res, err := is.etcdCli.Get(ctx, tidbinfo.TopologyInformationPath, clientv3.WithPrefix())
+    infos := make(map[string]*TiDBInfo, len(res.Kvs)/2)
+    for _, kv := range res.Kvs {
+        var ttl, addr string
+        var topology *tidbinfo.TopologyInfo
+        key := hack.String(kv.Key)
+        switch {
+        case strings.HasSuffix(key, ttlSuffix):
+            addr = key[len(tidbinfo.TopologyInformationPath)+1 : len(key)-len(ttlSuffix)-1]
+            ttl = hack.String(kv.Value)
+        case strings.HasSuffix(key, infoSuffix):
+            addr = key[len(tidbinfo.TopologyInformationPath)+1 : len(key)-len(infoSuffix)-1]
+            json.Unmarshal(kv.Value, &topology)
+        default:
+            continue
+        }
 
-		info := infos[addr]
-		if len(ttl) > 0 {
-			info.TTL = hack.String(kv.Value)
-		} else {
-			info.TopologyInfo = topology
-		}
-	}
-	return infos, nil
+        info := infos[addr]
+        if len(ttl) > 0 {
+            info.TTL = hack.String(kv.Value)
+        } else {
+            info.TopologyInfo = topology
+        }
+    }
+    return infos, nil
 }
 ```
 
@@ -77,21 +77,21 @@ func (is *InfoSyncer) GetTiDBTopology(ctx context.Context) (map[string]*TiDBInfo
 
 ```go
 func (bo *BackendObserver) observe(ctx context.Context) {
-	for ctx.Err() == nil {
-		// 获取
+    for ctx.Err() == nil {
+        // 获取
         backendInfo, err := bo.fetcher.GetBackendList(ctx)
         // 检查
-		bhMap := bo.checkHealth(ctx, backendInfo)
+        bhMap := bo.checkHealth(ctx, backendInfo)
         // 通知
-		bo.notifyIfChanged(bhMap)
+        bo.notifyIfChanged(bhMap)
 
-		select {
-		case <-time.After(bo.healthCheckConfig.Interval):  // 间隔3秒
-		case <-bo.refreshChan:
-		case <-ctx.Done():
-			return
-		}
-	}
+        select {
+        case <-time.After(bo.healthCheckConfig.Interval):  // 间隔3秒
+        case <-bo.refreshChan:
+        case <-ctx.Done():
+            return
+        }
+    }
 }
 ```
 
@@ -105,33 +105,33 @@ func (bo *BackendObserver) observe(ctx context.Context) {
 
 ```go
 func (bo *BackendObserver) checkHealth(ctx context.Context, backends map[string]*BackendInfo) map[string]*backendHealth {
-	curBackendHealth := make(map[string]*backendHealth, len(backends))
-	for addr, info := range backends {
-		bh := &backendHealth{
-			status: StatusHealthy,
-		}
-		curBackendHealth[addr] = bh
-		// http 服务检查
-		if info != nil && len(info.IP) > 0 {
-			schema := "http"
-			httpCli := *bo.httpCli
-			httpCli.Timeout = bo.healthCheckConfig.DialTimeout
-			url := fmt.Sprintf("%s://%s:%d%s", schema, info.IP, info.StatusPort, statusPathSuffix)
-			resp, err := httpCli.Get(url)
-			if err != nil {
-				bh.status = StatusCannotConnect
-				bh.pingErr = errors.Wrapf(err, "connect status port failed")
-				continue
-			}
-		}
+    curBackendHealth := make(map[string]*backendHealth, len(backends))
+    for addr, info := range backends {
+        bh := &backendHealth{
+            status: StatusHealthy,
+        }
+        curBackendHealth[addr] = bh
+        // http 服务检查
+        if info != nil && len(info.IP) > 0 {
+            schema := "http"
+            httpCli := *bo.httpCli
+            httpCli.Timeout = bo.healthCheckConfig.DialTimeout
+            url := fmt.Sprintf("%s://%s:%d%s", schema, info.IP, info.StatusPort, statusPathSuffix)
+            resp, err := httpCli.Get(url)
+            if err != nil {
+                bh.status = StatusCannotConnect
+                bh.pingErr = errors.Wrapf(err, "connect status port failed")
+                continue
+            }
+        }
         // tcp 服务检查
         conn, err := net.DialTimeout("tcp", addr, bo.healthCheckConfig.DialTimeout)
         if err != nil {
-			bh.status = StatusCannotConnect
-			bh.pingErr = errors.Wrapf(err, "connect sql port failed")
-		}		
-	}
-	return curBackendHealth
+            bh.status = StatusCannotConnect
+            bh.pingErr = errors.Wrapf(err, "connect sql port failed")
+        }        
+    }
+    return curBackendHealth
 }
 ```
 
@@ -145,41 +145,41 @@ func (bo *BackendObserver) checkHealth(ctx context.Context, backends map[string]
 // - 在 bo.curBackendInfo 中也在 bhMap 中，但是最新的状态不是 StatusHealthy：也需要记录下
 // - 在 bhMap 中但是不在 bo.curBackendInfo 中：说明是新增 tidb 节点，需要记录下
 func (bo *BackendObserver) notifyIfChanged(bhMap map[string]*backendHealth) {
-	updatedBackends := make(map[string]*backendHealth)
-	for addr, lastHealth := range bo.curBackendInfo {
-		if lastHealth.status == StatusHealthy {
-			if newHealth, ok := bhMap[addr]; !ok {
-				updatedBackends[addr] = &backendHealth{
-					status:  StatusCannotConnect,
-					pingErr: errors.New("removed from backend list"),
-				}
-				updateBackendStatusMetrics(addr, lastHealth.status, StatusCannotConnect)
-			} else if newHealth.status != StatusHealthy {
-				updatedBackends[addr] = newHealth
-				updateBackendStatusMetrics(addr, lastHealth.status, newHealth.status)
-			}
-		}
-	}
-	for addr, newHealth := range bhMap {
-		if newHealth.status == StatusHealthy {
-			lastHealth, ok := bo.curBackendInfo[addr]
-			if !ok {
-				lastHealth = &backendHealth{
-					status: StatusCannotConnect,
-				}
-			}
-			if lastHealth.status != StatusHealthy {
-				updatedBackends[addr] = newHealth
-				updateBackendStatusMetrics(addr, lastHealth.status, newHealth.status)
-			} else if lastHealth.serverVersion != newHealth.serverVersion {
-				// Not possible here: the backend finishes upgrading between two health checks.
-				updatedBackends[addr] = newHealth
-			}
-		}
-	}
-	// Notify it even when the updatedBackends is empty, in order to clear the last error.
-	bo.eventReceiver.OnBackendChanged(updatedBackends, nil)
-	bo.curBackendInfo = bhMap
+    updatedBackends := make(map[string]*backendHealth)
+    for addr, lastHealth := range bo.curBackendInfo {
+        if lastHealth.status == StatusHealthy {
+            if newHealth, ok := bhMap[addr]; !ok {
+                updatedBackends[addr] = &backendHealth{
+                    status:  StatusCannotConnect,
+                    pingErr: errors.New("removed from backend list"),
+                }
+                updateBackendStatusMetrics(addr, lastHealth.status, StatusCannotConnect)
+            } else if newHealth.status != StatusHealthy {
+                updatedBackends[addr] = newHealth
+                updateBackendStatusMetrics(addr, lastHealth.status, newHealth.status)
+            }
+        }
+    }
+    for addr, newHealth := range bhMap {
+        if newHealth.status == StatusHealthy {
+            lastHealth, ok := bo.curBackendInfo[addr]
+            if !ok {
+                lastHealth = &backendHealth{
+                    status: StatusCannotConnect,
+                }
+            }
+            if lastHealth.status != StatusHealthy {
+                updatedBackends[addr] = newHealth
+                updateBackendStatusMetrics(addr, lastHealth.status, newHealth.status)
+            } else if lastHealth.serverVersion != newHealth.serverVersion {
+                // Not possible here: the backend finishes upgrading between two health checks.
+                updatedBackends[addr] = newHealth
+            }
+        }
+    }
+    // Notify it even when the updatedBackends is empty, in order to clear the last error.
+    bo.eventReceiver.OnBackendChanged(updatedBackends, nil)
+    bo.curBackendInfo = bhMap
 }
 ```
 
@@ -194,9 +194,9 @@ func (bo *BackendObserver) notifyIfChanged(bhMap map[string]*backendHealth) {
 
 ```go
 type ScoreBasedRouter struct {
-	sync.Mutex
-	// A list of *backendWrapper. The backends are in descending order of scores.
-	backends     *glist.List[*backendWrapper]
+    sync.Mutex
+    // A list of *backendWrapper. The backends are in descending order of scores.
+    backends     *glist.List[*backendWrapper]
     // ...
 }
 
@@ -220,65 +220,65 @@ adjustBackendList 本质就是调整 item 在双向链表中的位置，这个�
 // rebalanceLoop 计算间隔是 10 ms，每次最多处理 10 个连接(防止后端出现抖动)
 // - backends 的变化是通过 OnBackendChanged 修改的，连接平衡是 rebalanceLoop 函数做的，两者为了保证并发使用了 sync.Mutex
 func (router *ScoreBasedRouter) rebalanceLoop(ctx context.Context) {
-	for {
-		router.rebalance(rebalanceConnsPerLoop)
-		select {
-		case <-ctx.Done():
-			return
-		case <-time.After(rebalanceInterval):
-		}
-	}
+    for {
+        router.rebalance(rebalanceConnsPerLoop)
+        select {
+        case <-ctx.Done():
+            return
+        case <-time.After(rebalanceInterval):
+        }
+    }
 }
 
 // rebalance
 func (router *ScoreBasedRouter) rebalance(maxNum int) {
-	curTime := time.Now()
-	router.Lock()
-	defer router.Unlock()
-	for i := 0; i < maxNum; i++ {
-		var busiestEle *glist.Element[*backendWrapper]
-		for be := router.backends.Front(); be != nil; be = be.Next() {
-			backend := be.Value
-			if backend.connList.Len() > 0 {
-				busiestEle = be
-				break
-			}
-		}
-		if busiestEle == nil {
-			break
-		}
-		busiestBackend := busiestEle.Value
-		idlestEle := router.backends.Back()
-		idlestBackend := idlestEle.Value
-		if float64(busiestBackend.score())/float64(idlestBackend.score()+1) < rebalanceMaxScoreRatio {
-			break
-		}
-		var ce *glist.Element[*connWrapper]
-		for ele := busiestBackend.connList.Front(); ele != nil; ele = ele.Next() {
-			conn := ele.Value
-			switch conn.phase {
-			case phaseRedirectNotify:
-				continue
-			case phaseRedirectFail:
-				if conn.lastRedirect.Add(redirectFailMinInterval).After(curTime) {
-					continue
-				}
-			}
-			ce = ele
-			break
-		}
-		if ce == nil {
-			break
-		}
-		conn := ce.Value
-		busiestBackend.connScore--
-		router.adjustBackendList(busiestEle)
-		idlestBackend.connScore++
-		router.adjustBackendList(idlestEle)
-		conn.phase = phaseRedirectNotify
-		conn.lastRedirect = curTime
-		conn.Redirect(idlestBackend.addr)
-	}
+    curTime := time.Now()
+    router.Lock()
+    defer router.Unlock()
+    for i := 0; i < maxNum; i++ {
+        var busiestEle *glist.Element[*backendWrapper]
+        for be := router.backends.Front(); be != nil; be = be.Next() {
+            backend := be.Value
+            if backend.connList.Len() > 0 {
+                busiestEle = be
+                break
+            }
+        }
+        if busiestEle == nil {
+            break
+        }
+        busiestBackend := busiestEle.Value
+        idlestEle := router.backends.Back()
+        idlestBackend := idlestEle.Value
+        if float64(busiestBackend.score())/float64(idlestBackend.score()+1) < rebalanceMaxScoreRatio {
+            break
+        }
+        var ce *glist.Element[*connWrapper]
+        for ele := busiestBackend.connList.Front(); ele != nil; ele = ele.Next() {
+            conn := ele.Value
+            switch conn.phase {
+            case phaseRedirectNotify:
+                continue
+            case phaseRedirectFail:
+                if conn.lastRedirect.Add(redirectFailMinInterval).After(curTime) {
+                    continue
+                }
+            }
+            ce = ele
+            break
+        }
+        if ce == nil {
+            break
+        }
+        conn := ce.Value
+        busiestBackend.connScore--
+        router.adjustBackendList(busiestEle)
+        idlestBackend.connScore++
+        router.adjustBackendList(idlestEle)
+        conn.phase = phaseRedirectNotify
+        conn.lastRedirect = curTime
+        conn.Redirect(idlestBackend.addr)
+    }
 }
 ```
 
@@ -300,15 +300,15 @@ func (router *ScoreBasedRouter) rebalance(maxNum int) {
 
 ```go
 func (b *backendWrapper) score() int {
-	return b.status.ToScore() + b.connScore
+    return b.status.ToScore() + b.connScore
 }
 
 // var statusScores = map[BackendStatus]int{
-// 	StatusHealthy:        0,
-// 	StatusCannotConnect:  10000000,
-// 	StatusMemoryHigh:     5000,
-// 	StatusRunSlow:        5000,
-// 	StatusSchemaOutdated: 10000000,
+//     StatusHealthy:        0,
+//     StatusCannotConnect:  10000000,
+//     StatusMemoryHigh:     5000,
+//     StatusRunSlow:        5000,
+//     StatusSchemaOutdated: 10000000,
 // }
 
 // connScore = connList.Len() + incoming connections - outgoing connections.
@@ -329,8 +329,8 @@ func (b *backendWrapper) score() int {
 
 ```go
 type BackendConnManager struct {
-	// processLock makes redirecting and command processing exclusive.
-	processLock sync.Mutex
+    // processLock makes redirecting and command processing exclusive.
+    processLock sync.Mutex
     clientIO   *pnet.PacketIO
     backendIO        atomic.Pointer[pnet.PacketIO]
     authenticator  *Authenticator
@@ -358,15 +358,15 @@ func (mgr *BackendConnManager) ExecuteCmd(ctx context.Context, request []byte) (
 
 ```go
 func (mgr *BackendConnManager) Redirect(newAddr string) bool {
-	// NOTE: BackendConnManager may be closing concurrently because of no lock.
-	switch mgr.closeStatus.Load() {
-	case statusNotifyClose, statusClosing, statusClosed:
-		return false
-	}
-	mgr.redirectInfo.Store(&signalRedirect{newAddr: newAddr})
-	// Generally, it won't wait because the caller won't send another signal before the previous one finishes.
-	mgr.signalReceived <- signalTypeRedirect
-	return true
+    // NOTE: BackendConnManager may be closing concurrently because of no lock.
+    switch mgr.closeStatus.Load() {
+    case statusNotifyClose, statusClosing, statusClosed:
+        return false
+    }
+    mgr.redirectInfo.Store(&signalRedirect{newAddr: newAddr})
+    // Generally, it won't wait because the caller won't send another signal before the previous one finishes.
+    mgr.signalReceived <- signalTypeRedirect
+    return true
 }
 ```
 
@@ -374,26 +374,26 @@ func (mgr *BackendConnManager) Redirect(newAddr string) bool {
 
 ```go
 func (mgr *BackendConnManager) processSignals(ctx context.Context) {
-	for {
-		select {
-		case s := <-mgr.signalReceived:
-			// Redirect the session immediately just in case the session is finishedTxn.
-			mgr.processLock.Lock()
-			switch s {
-			case signalTypeGracefulClose:
-				mgr.tryGracefulClose(ctx)
-			case signalTypeRedirect:   // <<<<<<<<<<<<<<<<<<
-				mgr.tryRedirect(ctx)   
-			}
-			mgr.processLock.Unlock()
-		case rs := <-mgr.redirectResCh:
-			mgr.notifyRedirectResult(ctx, rs)
-		case <-mgr.checkBackendTicker.C:
-			mgr.checkBackendActive()
-		case <-ctx.Done():
-			return
-		}
-	}
+    for {
+        select {
+        case s := <-mgr.signalReceived:
+            // Redirect the session immediately just in case the session is finishedTxn.
+            mgr.processLock.Lock()
+            switch s {
+            case signalTypeGracefulClose:
+                mgr.tryGracefulClose(ctx)
+            case signalTypeRedirect:   // <<<<<<<<<<<<<<<<<<
+                mgr.tryRedirect(ctx)   
+            }
+            mgr.processLock.Unlock()
+        case rs := <-mgr.redirectResCh:
+            mgr.notifyRedirectResult(ctx, rs)
+        case <-mgr.checkBackendTicker.C:
+            mgr.checkBackendActive()
+        case <-ctx.Done():
+            return
+        }
+    }
 }
 ```
 
@@ -414,34 +414,34 @@ tryRedirect 处理逻辑比较复杂，我们选取核心流程进行简述：
 ```go
 func (mgr *BackendConnManager) tryRedirect(ctx context.Context) {
     // 获取目标 backend
-	signal := mgr.redirectInfo.Load()
+    signal := mgr.redirectInfo.Load()
     // 处于事务中，先不做迁移
-	if !mgr.cmdProcessor.finishedTxn() {
-		return
-	}
+    if !mgr.cmdProcessor.finishedTxn() {
+        return
+    }
     // 组装执行结果
-	rs := &redirectResult{
-		from: mgr.ServerAddr(),
-		to:   signal.newAddr,
-	}
-	defer func() {
+    rs := &redirectResult{
+        from: mgr.ServerAddr(),
+        to:   signal.newAddr,
+    }
+    defer func() {
         // 不论执行成功与否都清空 redirectInfo， 并将 rs 结果发到 redirectResCh， redirectResCh 的处理逻辑还是在 processSignals 中处理
-		mgr.redirectInfo.Store(nil)
-		mgr.redirectResCh <- rs
-	}()
+        mgr.redirectInfo.Store(nil)
+        mgr.redirectResCh <- rs
+    }()
     // 从源 backend 获取 sessionStates, sessionToken
-	backendIO := mgr.backendIO.Load()
+    backendIO := mgr.backendIO.Load()
     sessionStates, sessionToken, rs.err := mgr.querySessionStates(backendIO)
     // 跟目标 backend 建立tcp连接
-	cn, rs.err := net.DialTimeout("tcp", rs.to, DialTimeout)
+    cn, rs.err := net.DialTimeout("tcp", rs.to, DialTimeout)
     // 将 conn 包裹为 PacketIO
-	newBackendIO := pnet.NewPacketIO(cn, mgr.logger, pnet.WithRemoteAddr(rs.to, cn.RemoteAddr()), pnet.WithWrapError(ErrBackendConn))
+    newBackendIO := pnet.NewPacketIO(cn, mgr.logger, pnet.WithRemoteAddr(rs.to, cn.RemoteAddr()), pnet.WithWrapError(ErrBackendConn))
     // 使用 session token方式跟目标 backend 进行鉴握手鉴权
-	mgr.authenticator.handshakeSecondTime(mgr.logger, mgr.clientIO, newBackendIO, mgr.backendTLS, sessionToken)
+    mgr.authenticator.handshakeSecondTime(mgr.logger, mgr.clientIO, newBackendIO, mgr.backendTLS, sessionToken)
     // 登录目标 backend 进行鉴权
-	rs.err = mgr.initSessionStates(newBackendIO, sessionStates)
+    rs.err = mgr.initSessionStates(newBackendIO, sessionStates)
     // 将新的 PacketIO 存储到 BackendConnManager 的成员变量中，后续再有请求都是用此变量
-	mgr.backendIO.Store(newBackendIO)
+    mgr.backendIO.Store(newBackendIO)
 }
 ```
 
@@ -459,23 +459,23 @@ func (mgr *BackendConnManager) tryRedirect(ctx context.Context) {
 
 ```
 func (mgr *BackendConnManager) processSignals(ctx context.Context) {
-	for {
+    for {
             // ...
-			mgr.processLock.Lock()
-			switch s {
-			case signalTypeRedirect:
-				mgr.tryRedirect(ctx)
-			}
-			mgr.processLock.Unlock()
+            mgr.processLock.Lock()
+            switch s {
+            case signalTypeRedirect:
+                mgr.tryRedirect(ctx)
+            }
+            mgr.processLock.Unlock()
             // ...
-		}
-	}
+        }
+    }
 }
 
 func (mgr *BackendConnManager) ExecuteCmd(ctx context.Context, request []byte) (err error) {
     // ...
     mgr.processLock.Lock()
-	defer mgr.processLock.Unlock()
+    defer mgr.processLock.Unlock()
     // ...
     waitingRedirect := mgr.redirectInfo.Load() != nil
     // ...
@@ -517,45 +517,45 @@ func (mgr *BackendConnManager) ExecuteCmd(ctx context.Context, request []byte) (
 
 ```go
 func (cp *CmdProcessor) finishedTxn() bool {
-	if cp.serverStatus&(StatusInTrans|StatusQuit) > 0 {
-		return false
-	}
-	// If any result of the prepared statements is not fetched, we should wait.
-	return !cp.hasPendingPreparedStmts()
+    if cp.serverStatus&(StatusInTrans|StatusQuit) > 0 {
+        return false
+    }
+    // If any result of the prepared statements is not fetched, we should wait.
+    return !cp.hasPendingPreparedStmts()
 }
 
 func (cp *CmdProcessor) updatePrepStmtStatus(request []byte, serverStatus uint16) {
-	var (
-		stmtID         int
-		prepStmtStatus uint32
-	)
-	cmd := pnet.Command(request[0])
-	switch cmd {
-	case pnet.ComStmtSendLongData, pnet.ComStmtExecute, pnet.ComStmtFetch, pnet.ComStmtReset, pnet.ComStmtClose:
-		stmtID = int(binary.LittleEndian.Uint32(request[1:5]))
-	case pnet.ComResetConnection, pnet.ComChangeUser:
-		cp.preparedStmtStatus = make(map[int]uint32)
-		return
-	default:
-		return
-	}
-	switch cmd {
-	case pnet.ComStmtSendLongData:
-		prepStmtStatus = StatusPrepareWaitExecute
-	case pnet.ComStmtExecute:
-		if serverStatus&mysql.ServerStatusCursorExists > 0 {
-			prepStmtStatus = StatusPrepareWaitFetch
-		}
-	case pnet.ComStmtFetch:
-		if serverStatus&mysql.ServerStatusLastRowSend == 0 {
-			prepStmtStatus = StatusPrepareWaitFetch
-		}
-	}
-	if prepStmtStatus > 0 {
-		cp.preparedStmtStatus[stmtID] = prepStmtStatus
-	} else {
-		delete(cp.preparedStmtStatus, stmtID)
-	}
+    var (
+        stmtID         int
+        prepStmtStatus uint32
+    )
+    cmd := pnet.Command(request[0])
+    switch cmd {
+    case pnet.ComStmtSendLongData, pnet.ComStmtExecute, pnet.ComStmtFetch, pnet.ComStmtReset, pnet.ComStmtClose:
+        stmtID = int(binary.LittleEndian.Uint32(request[1:5]))
+    case pnet.ComResetConnection, pnet.ComChangeUser:
+        cp.preparedStmtStatus = make(map[int]uint32)
+        return
+    default:
+        return
+    }
+    switch cmd {
+    case pnet.ComStmtSendLongData:
+        prepStmtStatus = StatusPrepareWaitExecute
+    case pnet.ComStmtExecute:
+        if serverStatus&mysql.ServerStatusCursorExists > 0 {
+            prepStmtStatus = StatusPrepareWaitFetch
+        }
+    case pnet.ComStmtFetch:
+        if serverStatus&mysql.ServerStatusLastRowSend == 0 {
+            prepStmtStatus = StatusPrepareWaitFetch
+        }
+    }
+    if prepStmtStatus > 0 {
+        cp.preparedStmtStatus[stmtID] = prepStmtStatus
+    } else {
+        delete(cp.preparedStmtStatus, stmtID)
+    }
 }
 ```
 
